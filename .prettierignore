@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+.turbo/
+pnpm-lock.yaml
+*.md
+sojoai-design-system-v3.html
+sojoai-project-plan.md
