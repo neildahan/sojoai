@@ -27,6 +27,11 @@ Required env vars are documented in `apps/web/.env.example`.
 SojoAI/
 ├── apps/
 │   └── web/                       # Next.js 16 App Router app (@sojoai/web)
+│       └── src/
+│           ├── app/               # routes
+│           ├── components/        # ui/ (shadcn primitives) + layout/ (app shell)
+│           ├── features/          # feature-first: agents, office-floor, chat, …
+│           └── lib/               # shared infra: registry, ai, db, env, utils
 ├── docs/                          # Project-wide guides (read these!)
 │   ├── STACK.md                   # Locked tech choices and why
 │   ├── ARCHITECTURE.md            # App Router layout + ProjectBrain pattern

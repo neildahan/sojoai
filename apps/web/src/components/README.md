@@ -1,24 +1,24 @@
 # Components
 
-Sojo AI components are organised in **layers**. Each layer has a clear responsibility — pick the right one when adding new components.
+This folder is intentionally small. Sojo AI uses **feature-first organisation** — domain components live in [`src/features/`](../features/README.md), not here.
 
 ```
 components/
-├── ui/        ← primitives: Button, Badge, Input, Avatar (shadcn-style, headless-ish)
-├── common/    ← cross-cutting reusables: Toast, Modal, EmptyState, ErrorBoundary
-├── agents/    ← agent-specific entity components: AgentIconWrap, DeskCard, ChatBubble, StandupCard
-├── project/   ← project-scoped: ProjectCard, OfficeFloor, TeamFeed, DeliverablePanel
-└── layout/    ← Sidebar, TopBar, PageWrapper, BreadCrumb
+├── ui/        ← shadcn-style primitives ONLY: Button, Input, Dialog, Toast, Skeleton, Badge, …
+└── layout/    ← app shell: Sidebar, TopBar, PageWrapper, Breadcrumb
 ```
 
-## Rules
+## What goes here vs in features/
 
-1. **One source of truth per primitive.** Status rings, agent icons, badges, buttons — each has exactly one component. Variants via props/className, never via copy-pasted files.
-2. **Search before writing.** Before creating a new component, grep `components/` for an existing one to extend.
-3. **Up the chain only.** A component may import from layers _below_ it, never above. `agents/*` may import `ui/*` and `common/*`. `ui/*` imports nothing from this tree.
-4. **Co-locate the example.** When you add or change a component, update an example in `docs/COMPONENTS.md`.
-5. **Typed props.** Every component takes a typed `Props` interface. Defaults are explicit.
-6. **No hard-coded copy.** All user-visible strings come from props or a future i18n layer.
-7. **No business logic in `ui/`.** Primitives must be reusable in any project.
+| Question | Answer |
+|---|---|
+| Is it a **headless primitive** (Button, Input, Dialog, Tooltip)? | `components/ui/` |
+| Is it part of the **app shell** (Sidebar, TopBar, BreadCrumb)? | `components/layout/` |
+| Does it represent a **domain concept** (agent, project, deliverable, task, chat)? | `features/<feature>/components/` |
+| Is it used by **only one route** and won't be reused? | `app/<route>/_components/` |
 
-See `docs/COMPONENTS.md` for layer details and the conventions for adding a new component.
+## Why so small?
+
+`components/` is for *project-agnostic* UI primitives and global chrome. Anything else has a feature it belongs to — and locality wins over a one-size-fits-all `components/` folder once the app passes ~20 components.
+
+See [`docs/COMPONENTS.md`](../../../../docs/COMPONENTS.md) for full conventions and [`src/features/README.md`](../features/README.md) for the feature-first rules.

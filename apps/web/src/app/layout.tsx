@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
 /**
@@ -49,7 +50,9 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <ClerkProvider>{children}</ClerkProvider>
+      </body>
     </html>
   );
 }

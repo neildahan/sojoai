@@ -70,6 +70,24 @@ Route groups (`(marketing)`, `(auth)`) don't appear in the URL — they exist to
 
 ---
 
+## Code organisation
+
+Sojo AI uses **feature-first** code organisation:
+
+```
+apps/web/src/
+├── app/             ← routes (with _components/ for route-local UI)
+├── components/
+│   ├── ui/          ← shadcn-style primitives only
+│   └── layout/      ← Sidebar, TopBar, PageWrapper
+├── features/        ← domain folders: agents, office-floor, chat, deliverables, tasks, standups, projects
+└── lib/             ← shared infra: agents/registry, ai/, db/, env, utils
+```
+
+See [`COMPONENTS.md`](./COMPONENTS.md) for the rules on where things go.
+
+---
+
 ## Server vs Client Components
 
 - **Default to Server Components.** Faster, smaller bundles, direct DB access.
