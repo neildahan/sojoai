@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickFirstAgent } from './recommend';
+import { pickFirstAgent, mapNeedsToTeam } from './recommend';
 
 describe('pickFirstAgent', () => {
   it('returns Sarah when nothing is selected', () => {
@@ -56,5 +56,49 @@ describe('pickFirstAgent', () => {
     const snapshot = [...input];
     pickFirstAgent(input);
     expect(input).toEqual(snapshot);
+  });
+});
+
+describe('mapNeedsToTeam', () => {
+  it('returns Sarah alone for empty selection', () => {
+    expect(mapNeedsToTeam([])).toEqual(['sarah']);
+  });
+
+  it('prepends Sarah when plan is picked, in priority order', () => {
+    expect(mapNeedsToTeam(['plan', 'design', 'marketing'])).toEqual([
+      'sarah',
+      'alex',
+      'mia',
+    ]);
+  });
+
+  it('walks order without Sarah when plan is absent', () => {
+    expect(mapNeedsToTeam(['design', 'marketing'])).toEqual(['alex', 'mia']);
+  });
+
+  it('dedupes the recommended agent across overlapping needs', () => {
+    // development + frontend both map to Lena — should appear once.
+    expect(mapNeedsToTeam(['development', 'frontend'])).toEqual(['lena']);
+    // plan + design + qa: Sarah, Alex, Nina in order
+    expect(mapNeedsToTeam(['plan', 'design', 'qa'])).toEqual(['sarah', 'alex', 'nina']);
+  });
+
+  it('preserves both Lena and Marcus when frontend AND backend are picked', () => {
+    expect(mapNeedsToTeam(['frontend', 'backend'])).toEqual(['lena', 'marcus']);
+  });
+
+  it('first entry always matches pickFirstAgent', () => {
+    const cases: string[][] = [
+      [],
+      ['plan'],
+      ['design'],
+      ['design', 'marketing'],
+      ['security', 'qa'],
+      ['frontend'],
+      ['plan', 'design', 'development', 'qa', 'security', 'marketing'],
+    ];
+    for (const c of cases) {
+      expect(mapNeedsToTeam(c)[0]).toBe(pickFirstAgent(c));
+    }
   });
 });

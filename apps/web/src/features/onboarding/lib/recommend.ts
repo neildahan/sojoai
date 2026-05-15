@@ -46,11 +46,38 @@ const ORDER = [
  * - Fallback (defensive): Sarah.
  */
 export function pickFirstAgent(needs: readonly string[]): AgentId {
-  if (needs.length === 0 || needs.includes('plan')) return 'sarah';
+  return mapNeedsToTeam(needs)[0] ?? 'sarah';
+}
+
+/**
+ * Map the user's selected needs to the full ordered list of agents they
+ * should hire. The first entry is the recommended FIRST hire; the rest
+ * follow in priority order. Duplicates are removed (e.g. picking both
+ * `development` and `frontend` produces a single Lena entry).
+ *
+ * Sarah is prepended when `plan` is selected (or when nothing is selected,
+ * as a sensible default) — she leads scoping for everyone else.
+ */
+export function mapNeedsToTeam(needs: readonly string[]): AgentId[] {
+  const result: AgentId[] = [];
+  const push = (a: AgentId): void => {
+    if (!result.includes(a)) result.push(a);
+  };
+
+  if (needs.length === 0 || needs.includes('plan')) {
+    push('sarah');
+  }
+
   for (const n of ORDER) {
-    if (needs.includes(n) && NEED_TO_AGENT[n]) {
-      return NEED_TO_AGENT[n] as AgentId;
+    if (needs.includes(n)) {
+      const agent = NEED_TO_AGENT[n];
+      if (agent) push(agent);
     }
   }
-  return 'sarah';
+
+  // Defensive: empty `ORDER` walk could happen if needs contains only
+  // unknown values — fall back to Sarah.
+  if (result.length === 0) push('sarah');
+
+  return result;
 }
