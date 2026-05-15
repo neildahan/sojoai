@@ -27,40 +27,40 @@ const BodySchema = z.object({
   description: z.string().min(10).max(500),
 });
 
-const SYSTEM_PROMPT = `You are a top brand strategist naming early-stage software products. Your goal: names that feel RIGHT for the user's product without being literal descriptions or industry jargon.
+const SYSTEM_PROMPT = `You name early-stage software products in a CLEAR, DESCRIPTIVE style. The goal: a name that immediately tells the user what the product is about.
 
-The trick: real brands evoke the FEELING of their field, not its vocabulary.
-- Insurance brands (trust / shelter / foundation): Lemonade, Hippo, Root, Coalition, Coterie, Ladder, Pie.
-- Payments brands (flow / settlement / clean): Stripe, Plaid, Brex, Ramp, Mercury.
-- Productivity brands (thought / structure / motion): Notion, Linear, Asana, Coda, Roam.
-- Health brands (vitality / care / life): Calm, Headspace, Oura, Ro, Hims.
-- Communications (voice / channel): Slack, Loom, Discord, Twilio.
+Think of this style: Mailchimp (email + chimp), Calendly (calendar), Zapier (zap), Grammarly (grammar), DocuSign (docs + sign), TaskRabbit (tasks), QuickBooks (books), HubSpot (hub), Squarespace (squares + space), Dropbox (drop + box). These names succeed BECAUSE they contain industry vocabulary — they reveal the product on first read.
 
-Notice none of those say "insurance", "payments", "productivity" etc. directly — they evoke a quality (shelter, flow, thought) associated with the field. That's the bullseye.
+Your approach for every suggestion:
 
-How to approach a name:
-1. Read the description. Infer the field implicitly.
-2. Identify the CORE VALUE that field promises (e.g. insurance → trust/safety; payments → speed/clarity; therapy → presence/calm).
-3. Generate 4 names that EVOKE that value through metaphor — without using the field's vocabulary.
+1. Read the description. Identify three building blocks:
+   - FIELD (e.g. insurance, fitness, legal, education)
+   - USER ROLE or OBJECT (e.g. agent, broker, claim, policy, student)
+   - ACTION (e.g. automate, sign, manage, track, write)
+
+2. Combine those building blocks with familiar SaaS-naming patterns:
+   - [Field/Role] + [Me/AI/Bot/Pilot/Pro/Wise/Flow/Hub]: InsureMe, PolicyPilot, AgentBot, ClaimWise, BrokerHub, AgentAI.
+   - [Action] + [Field/Role]: AutoInsure, SmartPolicy, FlowClaim, QuickBroker.
+   - [Field] + [-ify / -ly]: Insurify (used — pick a different pattern), Claimly.
+   - Portmanteau of two relevant words: AgentForge, PolicyForge, ClaimMate, InsureMate.
+
+3. Each name should clearly relate to the description. If a name doesn't reveal what the product is about, REJECT IT.
 
 Output rules:
-- Exactly 4 names, one per line. No numbering, quotes, explanation, surrounding text.
-- 1 word ideally, 2 max as exception.
-- Memorable, easy to spell, easy to say out loud, .com-friendly.
-- MIX it up: at least 2 of the 4 should clearly evoke the field's core value via metaphor (e.g. for insurance: Shelter, Anchor, Haven). The other 1-2 can lean more abstract/coined.
+- Exactly 4 names, one per line. No numbering, quotes, explanation, no surrounding text.
+- 1 word combined (CamelCase counts as one), or 2 words max.
+- Easy to read, easy to type.
 
-Hard constraints:
-- DO NOT reuse any noun from the user's description.
-- DO NOT use the field's literal vocabulary. Insurance products: REJECT Insure, Claim, Policy, Coverage, Premium, Underwrite, Adjuster, Risk. Fitness: REJECT Train, Fit, Run, Pace. Etc.
-- DO NOT use suffixes: AI, Tech, Lab, App, Cloud, Hub, Studio, Suite, OS, IO, .com, .ai.
-- DO NOT use numbers or generic words (Project, App, Platform, Tool, System).
+Vary the 4 suggestions:
+- Suggestion 1: heavy on the field word — e.g. InsureMe, InsureBot.
+- Suggestion 2: combines the role with an action/utility — e.g. AgentPilot, BrokerFlow.
+- Suggestion 3: combines an action verb with the field — e.g. AutoInsure, SmartPolicy.
+- Suggestion 4: a creative portmanteau still rooted in the field — e.g. PolicyMate, ClaimGenie.
 
-CRITICAL — existing brands are off-limits:
-DO NOT suggest the name of any well-known software, SaaS, or consumer brand — including the inspiration examples I listed above (Lemonade, Stripe, Notion, etc. are illustrative; you must NOT use them as your suggestion). Before sending each name, mentally check: "Is this already a real product?" If yes, replace it.
+CRITICAL — avoid existing brands:
+DO NOT propose names of existing well-known software (Mailchimp, Calendly, Zapier, Grammarly, DocuSign, TaskRabbit, QuickBooks, HubSpot, Squarespace, Dropbox, Insurify, Lemonade, etc. are illustrative — they're TAKEN, do NOT suggest them). Before sending each name, mentally check: "Is this already a real product?" If yes, swap it.
 
-Look for words like: Anchor, Beacon, Atlas, Harbor, Haven, Shelter, Pillar, Bedrock, Cornerstone, Sentinel, Lumen, Tide, Helm, Spire, Forge, Glide, Pulse, Lattice, Compass, Foundry, Crest, Sprout, Bloom, Quill, Aurora, Echo, Lumos, Vela, Nova, Sigma, Aero, Tessera, Mosaic.
-
-Output ONLY the 4 names. Re-check each against your "is this a real product?" filter before sending.`;
+Output ONLY the 4 names. Each must clearly relate to the user's description.`;
 
 export async function POST(req: NextRequest): Promise<Response> {
   const { userId } = await auth();
@@ -191,5 +191,11 @@ const BRAND_DENYLIST = new Set(
     'wefox', 'next', 'oscar', 'bright', 'metromile', 'allstate', 'progressive',
     'calm', 'headspace', 'oura', 'whoop', 'strava', 'peloton', 'noom',
     'ro', 'hims', 'forward', 'tia', 'maven',
+    // Descriptive-style SaaS brands cited as inspiration
+    'mailchimp', 'calendly', 'zapier', 'grammarly', 'docusign', 'taskrabbit',
+    'quickbooks', 'hubspot', 'squarespace', 'dropbox', 'insurify', 'policygenius',
+    'turbotax', 'docsend', 'pdfmonkey', 'shipstation', 'shippo', 'sendgrid',
+    'mailgun', 'postmark', 'lemlist', 'apollo', 'gong', 'chorus', 'outreach',
+    'salesloft', 'metabase', 'hex', 'mode', 'omni', 'preset',
   ].map((s) => s.toLowerCase()),
 );
