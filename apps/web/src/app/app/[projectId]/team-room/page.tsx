@@ -66,14 +66,14 @@ export default async function TeamRoomPage({ params }: PageProps): Promise<React
       description="Your team is working. The Meeting Room glows when two or more agents are talking — click any desk to message that agent directly."
       actions={
         <>
-          <button
-            type="button"
+          <Link
+            href={`/app/${projectId}/messages/meeting`}
             className={buttonVariants({ intent: 'secondary', size: 'sm' })}
             aria-label="Start a meeting"
           >
             <Play className="h-3.5 w-3.5" aria-hidden="true" />
             Start meeting
-          </button>
+          </Link>
           <Link
             href={`/app/${projectId}/hire`}
             className={buttonVariants({ intent: 'primary', size: 'sm' })}
