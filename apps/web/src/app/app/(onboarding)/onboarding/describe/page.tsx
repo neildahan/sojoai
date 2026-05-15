@@ -1,11 +1,6 @@
 import * as React from 'react';
-import Link from 'next/link';
 import { WizardStepIndicator } from '@/features/onboarding/components/WizardStepIndicator';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { buttonVariants } from '@/components/ui/button';
-import { submitDescribeAction } from '../actions';
+import { DescribeForm } from '@/features/onboarding/components/DescribeForm';
 
 export const metadata = { title: 'Describe your project' };
 
@@ -15,7 +10,8 @@ interface PageProps {
 
 /**
  * Step 2 (fresh path) — Describe.
- * Server form → submitDescribeAction → /app/onboarding/needs with params.
+ * Server shell only — the form lives in `DescribeForm` (client) so it can
+ * own the description+name state and call /api/projects/suggest-name.
  */
 export default async function OnboardingDescribePage({
   searchParams,
@@ -29,54 +25,11 @@ export default async function OnboardingDescribePage({
         Tell us about your project.
       </h1>
       <p className="mt-3 text-warm-500">
-        Don&rsquo;t worry about being technical. Describe it the way you&rsquo;d explain it to a
-        friend.
+        Describe it the way you&rsquo;d explain it to a friend. Once you&rsquo;ve described it,
+        you can name it yourself — or let us suggest a few.
       </p>
 
-      <form action={submitDescribeAction} className="mt-10 flex flex-col gap-5">
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-warm-700">Project name</span>
-          <Input
-            name="name"
-            placeholder="Mango Health"
-            required
-            maxLength={80}
-            autoComplete="off"
-            invalid={error === 'missing'}
-          />
-        </label>
-
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-warm-700">What does it do?</span>
-          <Textarea
-            name="description"
-            placeholder="A diet-tracking app for endurance athletes that learns from each workout…"
-            required
-            rows={5}
-            maxLength={500}
-            invalid={error === 'missing'}
-          />
-          <span className="font-mono text-[10px] text-warm-400">Up to 500 characters.</span>
-        </label>
-
-        {error === 'missing' ? (
-          <p role="alert" className="text-sm text-status-blocked">
-            Both name and description are required.
-          </p>
-        ) : null}
-
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <Link
-            href="/app/onboarding/start"
-            className={buttonVariants({ intent: 'ghost', size: 'md' })}
-          >
-            Back
-          </Link>
-          <Button type="submit" intent="primary" size="md">
-            Continue
-          </Button>
-        </div>
-      </form>
+      <DescribeForm {...(error ? { error } : {})} />
     </div>
   );
 }
