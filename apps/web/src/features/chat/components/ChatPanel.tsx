@@ -3,26 +3,32 @@
 import * as React from 'react';
 import { MessageThread, type ThreadMessage } from './MessageThread';
 import { MessageInput } from './MessageInput';
+import { streamReply } from '../lib/streamReply';
 import type { AgentId } from '@/lib/agents/registry';
 
 /**
  * ChatPanel — the full chat surface used in /messages/[agentId].
- * Owns the thread state, the typing indicator, the auto-scroll-to-bottom.
+ * Owns thread state, typing indicator, auto-scroll, and the SSE stream.
  *
- * Streaming wires in Phase 3.2 once ANTHROPIC_API_KEY is set:
- * `onSend(text)` will POST to `/api/projects/[id]/chat/[agentId]` (SSE)
- * and append chunks to the active assistant message.
- *
- * For now, `onSend` echoes a stubbed agent reply so the UX is functional
- * without the Claude API. Replace `mockReply` with a real fetch when wired.
+ * Flow:
+ * 1. User submits a message → appended optimistically.
+ * 2. Open POST /api/projects/[id]/chat/[agentId] (SSE).
+ * 3. Append each `delta.text` chunk to the active assistant bubble in place.
+ * 4. On `done`: close. On `error`: fall back to a one-shot stub reply so the
+ *    UX stays functional when ANTHROPIC_API_KEY isn't set yet.
  */
 
 export interface ChatPanelProps {
+  projectId: string;
   agentId: AgentId;
   initialMessages: ThreadMessage[];
 }
 
-export function ChatPanel({ agentId, initialMessages }: ChatPanelProps): React.ReactElement {
+export function ChatPanel({
+  projectId,
+  agentId,
+  initialMessages,
+}: ChatPanelProps): React.ReactElement {
   const [messages, setMessages] = React.useState<ThreadMessage[]>(initialMessages);
   const [pending, setPending] = React.useState(false);
   const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -40,18 +46,45 @@ export function ChatPanel({ agentId, initialMessages }: ChatPanelProps): React.R
         content: text,
         createdAt: new Date().toISOString(),
       };
-      setMessages((m) => [...m, userMsg]);
+      const assistantId = crypto.randomUUID();
+      const assistantPlaceholder: ThreadMessage = {
+        id: assistantId,
+        senderId: agentId,
+        role: 'assistant',
+        content: '',
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((m) => [...m, userMsg, assistantPlaceholder]);
       setPending(true);
+
+      const appendChunk = (chunk: string): void => {
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === assistantId ? { ...msg, content: msg.content + chunk } : msg,
+          ),
+        );
+      };
+
+      const history = [...messages, userMsg].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
       try {
-        // TODO(phase-3.2): replace with fetch to /api/projects/[id]/chat/[agentId]
-        // and stream the response via ReadableStream.
-        const reply = await mockReply(agentId, text);
-        setMessages((m) => [...m, reply]);
+        await streamReply({ projectId, agentId, messages: history, onDelta: appendChunk });
+      } catch (err) {
+        // Stream failed (likely no ANTHROPIC_API_KEY). Surface a stub reply so
+        // the UX is still functional. Remove this fallback once the key is set.
+        appendChunk(
+          err instanceof Error && err.message.includes('ANTHROPIC_API_KEY')
+            ? "I can't reach the model yet — drop your Anthropic key into apps/web/.env.local and I'll respond for real."
+            : 'Streaming failed — falling back to a stub reply. Real responses come once the chat API is reachable.',
+        );
       } finally {
         setPending(false);
       }
     },
-    [agentId],
+    [agentId, messages, projectId],
   );
 
   return (
@@ -65,20 +98,4 @@ export function ChatPanel({ agentId, initialMessages }: ChatPanelProps): React.R
       </div>
     </div>
   );
-}
-
-/**
- * Stub reply — pretends to be the agent thinking for ~700ms and replying.
- * Removed when SSE wiring lands.
- */
-async function mockReply(agentId: AgentId, _userText: string): Promise<ThreadMessage> {
-  await new Promise((r) => setTimeout(r, 700));
-  return {
-    id: crypto.randomUUID(),
-    senderId: agentId,
-    role: 'assistant',
-    content:
-      'Got it. Once the Claude API key is wired, I\'ll respond for real — token-by-token via SSE. For now this is a stub reply so the chat UX is browsable.',
-    createdAt: new Date().toISOString(),
-  };
 }

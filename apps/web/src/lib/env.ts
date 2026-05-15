@@ -22,6 +22,7 @@ const serverSchema = z.object({
 
   // ── Auth (Clerk) ──
   CLERK_SECRET_KEY: z.string().optional(),
+  CLERK_WEBHOOK_SECRET: z.string().optional(),
 
   // ── Email ──
   RESEND_API_KEY: z.string().optional(),

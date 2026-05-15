@@ -64,7 +64,7 @@ export default async function AgentDMPage({ params }: PageProps): Promise<React.
 
         {/* Conversation */}
         <div className="min-h-0 flex-1 bg-surface-page">
-          <ChatPanel agentId={agentId} initialMessages={initialMessages} />
+          <ChatPanel projectId={projectId} agentId={agentId} initialMessages={initialMessages} />
         </div>
       </section>
 
@@ -83,8 +83,6 @@ export default async function AgentDMPage({ params }: PageProps): Promise<React.
         </div>
       </aside>
 
-      {/* Unused while DB not wired */}
-      <span aria-hidden="true" data-project-id={projectId} className="hidden" />
     </div>
   );
 }
