@@ -17,6 +17,7 @@ const ALLOWED_NEEDS = new Set([
   'development', // shorthand for "frontend AND backend"
   'frontend',
   'backend',
+  'qa',
   'security',
   'marketing',
 ]);

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { ClipboardList, PenTool, Shield, Megaphone } from 'lucide-react';
+import { ClipboardList, PenTool, Bug, Shield, Megaphone } from 'lucide-react';
 import { WizardStepIndicator } from '@/features/onboarding/components/WizardStepIndicator';
 import { NeedToggleCard } from '@/features/onboarding/components/NeedToggleCard';
 import { DevelopmentNeedCard } from '@/features/onboarding/components/DevelopmentNeedCard';
@@ -32,6 +32,13 @@ const NEEDS = [
     description: 'Wireframes, components, tokens.',
     icon: <PenTool />,
     iconBg: 'bg-amber-50',
+  },
+  {
+    value: 'qa',
+    title: 'QA',
+    description: 'Tests everything before you ship. Catches bugs.',
+    icon: <Bug />,
+    iconBg: 'bg-orange-50',
   },
   {
     value: 'security',

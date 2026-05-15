@@ -29,6 +29,7 @@ interface PageProps {
  *   development  → Lena (UI-first default for combined dev)
  *   frontend     → Lena
  *   backend      → Marcus
+ *   qa           → Nina
  *   security     → Ryan
  *   marketing    → Mia
  *

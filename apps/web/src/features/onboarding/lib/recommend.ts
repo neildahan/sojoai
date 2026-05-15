@@ -16,12 +16,25 @@ const NEED_TO_AGENT: Record<string, AgentId> = {
   development: 'lena',
   frontend: 'lena',
   backend: 'marcus',
+  qa: 'nina',
   security: 'ryan',
   marketing: 'mia',
 };
 
-/** Priority order when multiple non-`plan` needs are picked. */
-const ORDER = ['design', 'development', 'frontend', 'backend', 'security', 'marketing'] as const;
+/**
+ * Priority order when multiple non-`plan` needs are picked.
+ * QA sits after development because you can't test what isn't built;
+ * security sits after QA because hardening is a later concern.
+ */
+const ORDER = [
+  'design',
+  'development',
+  'frontend',
+  'backend',
+  'qa',
+  'security',
+  'marketing',
+] as const;
 
 /**
  * Pick the first agent the user should hire based on the selected needs.

@@ -17,8 +17,18 @@ describe('pickFirstAgent', () => {
     expect(pickFirstAgent(['development'])).toBe('lena');
     expect(pickFirstAgent(['frontend'])).toBe('lena');
     expect(pickFirstAgent(['backend'])).toBe('marcus');
+    expect(pickFirstAgent(['qa'])).toBe('nina');
     expect(pickFirstAgent(['security'])).toBe('ryan');
     expect(pickFirstAgent(['marketing'])).toBe('mia');
+  });
+
+  it('picks development over QA when both are picked (build before test)', () => {
+    expect(pickFirstAgent(['qa', 'development'])).toBe('lena');
+    expect(pickFirstAgent(['qa', 'backend'])).toBe('marcus');
+  });
+
+  it('picks QA over security when both are picked (test before harden)', () => {
+    expect(pickFirstAgent(['security', 'qa'])).toBe('nina');
   });
 
   it('treats "development" as Lena (frontend default — UI is most tangible)', () => {
