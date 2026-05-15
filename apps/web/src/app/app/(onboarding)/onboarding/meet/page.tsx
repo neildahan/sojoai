@@ -174,7 +174,7 @@ function TeamMemberBadge({
  */
 const FIRST_HIRE_RATIONALE: Record<AgentId, string> = {
   sarah:
-    "She's your project manager — she scopes the work, plans the milestones, and leads the team for the duration.",
+    "She's your product manager — she scopes what gets built, prioritises the milestones, and the rest of the team works from her plan. Jamie (Scrum Master) handles the day-to-day coordination alongside her.",
   alex: "Design comes before code — Lena and Marcus build what Alex draws.",
   lena: "The UI is the most tangible starting point — easy to react to and easy to iterate.",
   marcus: "Backend-first makes sense when your product is built around data, integrations, or APIs.",
@@ -194,8 +194,8 @@ const FIRST_HIRE_RATIONALE: Record<AgentId, string> = {
  */
 const AGENT_DELIVERABLES: Record<AgentId, string[]> = {
   sarah: [
-    'Manage the project end-to-end — scope, milestones, and team coordination.',
-    'Turn your idea into a PRD with goals, users, scope, and open questions.',
+    'Own the product direction — scope, priorities, and milestones.',
+    'Turn your idea into a PRD with goals, users, and open questions.',
     'Hand off context to every agent you hire — they all read the same brain.',
   ],
   alex: [
