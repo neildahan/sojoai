@@ -93,12 +93,15 @@ export function MeetTeamForm({
         >
           Back
         </a>
-        <HireTeamSubmit count={kept.length} />
+        <HireTeamSubmit
+          count={kept.length + 1 /* +1 for Jamie (always included) */}
+          canSubmit={kept.length > 0}
+        />
       </div>
 
       {kept.length === 0 ? (
         <p role="alert" className="text-sm text-status-blocked">
-          Pick at least one agent. (Jamie joins regardless as your coordinator.)
+          Pick at least one specialist. (Jamie joins regardless as your coordinator.)
         </p>
       ) : null}
     </form>
@@ -200,12 +203,21 @@ function JamieCard(): React.ReactElement {
   );
 }
 
-function HireTeamSubmit({ count }: { count: number }): React.ReactElement {
+function HireTeamSubmit({
+  count,
+  canSubmit,
+}: {
+  count: number;
+  canSubmit: boolean;
+}): React.ReactElement {
   const { pending } = useFormStatus();
-  const label =
-    count === 0 ? 'No team to hire' : count === 1 ? 'Hire team' : `Hire ${count}-person team`;
+  const label = !canSubmit
+    ? 'No team to hire'
+    : count === 1
+      ? 'Hire team'
+      : `Hire ${count}-person team`;
   return (
-    <Button type="submit" intent="primary" size="lg" disabled={pending || count === 0}>
+    <Button type="submit" intent="primary" size="lg" disabled={pending || !canSubmit}>
       {pending ? (
         <Loader className="h-4 w-4 animate-spin" aria-hidden="true" />
       ) : (
