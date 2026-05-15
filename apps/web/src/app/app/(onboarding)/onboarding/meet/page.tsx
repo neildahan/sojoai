@@ -79,9 +79,9 @@ export default async function OnboardingMeetPage({
         <div className="rounded-md bg-indigo-50/60 p-4 text-sm text-indigo-900">
           <p className="font-medium">What {agent.name} will do for {projectLabel}:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-indigo-900/80">
-            <li>Read your description and ask the questions that matter.</li>
-            <li>Deliver a first draft — then hand off context to whoever you hire next.</li>
-            <li>Stay on the project. The brain they build is the same one the rest of the team reads.</li>
+            {AGENT_DELIVERABLES[recommended].map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
           </ul>
         </div>
       </section>
@@ -173,7 +173,8 @@ function TeamMemberBadge({
  * WHY this specific agent goes first. Keep it short — one sentence.
  */
 const FIRST_HIRE_RATIONALE: Record<AgentId, string> = {
-  sarah: "She turns your idea into a plan the rest of the team builds on.",
+  sarah:
+    "She's your project manager — she scopes the work, plans the milestones, and leads the team for the duration.",
   alex: "Design comes before code — Lena and Marcus build what Alex draws.",
   lena: "The UI is the most tangible starting point — easy to react to and easy to iterate.",
   marcus: "Backend-first makes sense when your product is built around data, integrations, or APIs.",
@@ -183,6 +184,65 @@ const FIRST_HIRE_RATIONALE: Record<AgentId, string> = {
   mia: "Marketing first when distribution is the harder problem than the build.",
   kai: "Social first when the product is the audience itself.",
   jamie: "Coordination first when the team is already in motion.",
+};
+
+/**
+ * Per-agent "what they'll do" bullets shown in the spotlight card.
+ * Used to be a single hardcoded list — which read as PM-shaped even when
+ * the recommended agent was Alex or Lena. Each agent now gets bullets
+ * that match what they actually deliver.
+ */
+const AGENT_DELIVERABLES: Record<AgentId, string[]> = {
+  sarah: [
+    'Manage the project end-to-end — scope, milestones, and team coordination.',
+    'Turn your idea into a PRD with goals, users, scope, and open questions.',
+    'Hand off context to every agent you hire — they all read the same brain.',
+  ],
+  alex: [
+    'Read the PRD (or your description) and propose a visual direction.',
+    'Ship wireframes, key screens, and the starting design system.',
+    'Hand the design off to Lena to build.',
+  ],
+  lena: [
+    'Scaffold the project and build the initial UI from the design or description.',
+    'Wire the frontend up to whatever backend exists or is coming.',
+    'Pair with Marcus on the API contract when it matters.',
+  ],
+  marcus: [
+    'Design the data model and the API shape.',
+    'Build the endpoints, auth, and integrations the product needs.',
+    'Hand the contract off to Lena so the frontend can wire in.',
+  ],
+  nina: [
+    'Write a test plan covering the critical user paths.',
+    'Catch regressions before each release.',
+    'Flag bugs back to whoever owns the code.',
+  ],
+  ryan: [
+    'Audit the current code (or planned architecture) for security issues.',
+    'Produce a prioritised hardening plan.',
+    'Re-verify after fixes ship.',
+  ],
+  david: [
+    'Set up the deployment pipeline and infrastructure.',
+    'Wire up monitoring, logs, and alerts.',
+    'Make shipping a non-event.',
+  ],
+  mia: [
+    'Develop the positioning and the launch plan.',
+    'Write landing-page copy, email sequences, and announcement posts.',
+    'Coordinate with Kai on social channels.',
+  ],
+  kai: [
+    'Write social posts, threads, and launch announcements.',
+    'Track what resonates and double down on it.',
+    'Coordinate with Mia on the broader campaign.',
+  ],
+  jamie: [
+    'Run daily standups across the team.',
+    'Flag blockers early so you can unblock the team fast.',
+    'Compile a daily digest you can read in 60 seconds.',
+  ],
 };
 
 function toArray(v: string | string[] | undefined): string[] {
