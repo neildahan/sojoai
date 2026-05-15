@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormStatus } from 'react-dom';
-import { Sparkles, Loader, UserMinus, RotateCcw } from 'lucide-react';
+import { Sparkles, Loader, UserMinus, RotateCcw, AlertCircle } from 'lucide-react';
 import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,24 +86,29 @@ export function MeetTeamForm({
       </ul>
 
       {/* Footer */}
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-4 flex items-start justify-between gap-3">
         <a
           href={backHref}
           className="inline-flex h-11 items-center rounded-md px-4 text-sm font-medium text-warm-700 hover:bg-warm-100"
         >
           Back
         </a>
-        <HireTeamSubmit
-          count={kept.length + 1 /* +1 for Jamie (always included) */}
-          canSubmit={kept.length > 0}
-        />
+        <div className="flex flex-col items-end gap-1.5">
+          <HireTeamSubmit
+            count={kept.length + 1 /* +1 for Jamie (always included) */}
+            canSubmit={kept.length > 0}
+          />
+          {kept.length === 0 ? (
+            <p
+              role="alert"
+              className="inline-flex max-w-xs items-center gap-1.5 text-right text-xs text-status-blocked"
+            >
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              Pick at least one specialist. Jamie joins regardless as your coordinator.
+            </p>
+          ) : null}
+        </div>
       </div>
-
-      {kept.length === 0 ? (
-        <p role="alert" className="text-sm text-status-blocked">
-          Pick at least one specialist. (Jamie joins regardless as your coordinator.)
-        </p>
-      ) : null}
     </form>
   );
 }
