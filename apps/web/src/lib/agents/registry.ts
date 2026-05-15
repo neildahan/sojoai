@@ -59,7 +59,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Compass,
     iconBg: '#E0E7FF',
     defaultModel: 'haiku',
-    pitch: 'Runs your daily standup, unblocks the team, keeps everyone moving.',
+    pitch: 'Coordinates the team. Runs daily standups, keeps work moving.',
     personality: ['organized', 'diplomatic', 'concise'],
   },
   sarah: {
@@ -70,7 +70,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: ClipboardList,
     iconBg: '#EEF0FF',
     defaultModel: 'sonnet',
-    pitch: 'Turns your idea into a real PRD, user stories, and a roadmap.',
+    pitch: 'Turns your idea into a clear plan — PRD, user stories, milestones.',
     personality: ['strategic', 'precise', 'asks why'],
   },
   alex: {
@@ -81,7 +81,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: PenTool,
     iconBg: '#FEF3C7',
     defaultModel: 'sonnet',
-    pitch: 'Designs the product. Wireframes, components, design tokens.',
+    pitch: 'Designs the look and feel — wireframes, screens, design system.',
     personality: ['opinionated', 'visual', 'user-obsessed'],
   },
   lena: {
@@ -92,7 +92,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Monitor,
     iconBg: '#ECFDF5',
     defaultModel: 'sonnet',
-    pitch: 'Ships the frontend. Clean, accessible, performant code.',
+    pitch: 'Builds the screens and buttons people see and tap.',
     personality: ['detail-oriented', 'a11y-focused', 'pragmatic'],
   },
   marcus: {
@@ -103,7 +103,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Server,
     iconBg: '#F0FDF4',
     defaultModel: 'sonnet',
-    pitch: 'Designs APIs, schemas, and the bits that have to scale.',
+    pitch: 'Builds the server, data, and APIs behind the screens.',
     personality: ['pragmatic', 'scale-aware', 'thinks in edge cases'],
   },
   nina: {
@@ -114,7 +114,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Bug,
     iconBg: '#FFF7ED',
     defaultModel: 'haiku',
-    pitch: 'Writes test plans, catches the regressions you missed.',
+    pitch: 'Tests everything before you ship. Catches bugs.',
     personality: ['skeptical', 'methodical', 'never ships untested'],
   },
   ryan: {
@@ -125,7 +125,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Shield,
     iconBg: '#FEF2F2',
     defaultModel: 'sonnet',
-    pitch: 'Flags risk before it ships. Audits, threat models, hardening.',
+    pitch: 'Audits for security risks. Flags problems early.',
     personality: ['blunt', 'risk-aware', 'no sugarcoat'],
   },
   david: {
@@ -136,7 +136,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Cloud,
     iconBg: '#F5F4F0',
     defaultModel: 'haiku',
-    pitch: 'Pipelines, deploys, infra. Makes shipping boring (in a good way).',
+    pitch: 'Handles deployment, infrastructure, and keeping things running.',
     personality: ['quiet', 'reliable', 'speaks in pipelines'],
   },
   mia: {
@@ -147,7 +147,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Megaphone,
     iconBg: '#FDF4FF',
     defaultModel: 'sonnet',
-    pitch: 'Positioning, launch plans, landing copy. Brand-obsessed.',
+    pitch: 'Positions the product. Launch plans, landing copy, brand.',
     personality: ['energetic', 'brand-obsessed', 'user-focused'],
   },
   kai: {
@@ -158,7 +158,7 @@ export const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: TrendingUp,
     iconBg: '#FFF1F2',
     defaultModel: 'haiku',
-    pitch: 'Hooks, threads, posts. Writes for the scroll.',
+    pitch: 'Writes social posts, threads, and hooks. Built for the scroll.',
     personality: ['creative', 'trend-aware', 'writes in hooks'],
   },
 };

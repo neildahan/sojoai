@@ -1,15 +1,9 @@
 import * as React from 'react';
 import Link from 'next/link';
-import {
-  ClipboardList,
-  PenTool,
-  Monitor,
-  Server,
-  Shield,
-  Megaphone,
-} from 'lucide-react';
+import { ClipboardList, PenTool, Shield, Megaphone } from 'lucide-react';
 import { WizardStepIndicator } from '@/features/onboarding/components/WizardStepIndicator';
 import { NeedToggleCard } from '@/features/onboarding/components/NeedToggleCard';
+import { DevelopmentNeedCard } from '@/features/onboarding/components/DevelopmentNeedCard';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { submitNeedsAction } from '../actions';
 
@@ -19,6 +13,11 @@ interface PageProps {
   searchParams: Promise<{ type?: string; name?: string; desc?: string; need?: string | string[] }>;
 }
 
+/**
+ * Plain "need" options (the ones rendered as standard NeedToggleCards).
+ * The Development need has its own card with sub-options for power users,
+ * so it lives outside this array.
+ */
 const NEEDS = [
   {
     value: 'plan',
@@ -35,30 +34,16 @@ const NEEDS = [
     iconBg: 'bg-amber-50',
   },
   {
-    value: 'frontend',
-    title: 'Frontend',
-    description: 'Clean, accessible UI code.',
-    icon: <Monitor />,
-    iconBg: 'bg-emerald-50',
-  },
-  {
-    value: 'backend',
-    title: 'Backend',
-    description: 'APIs, schemas, scale-aware logic.',
-    icon: <Server />,
-    iconBg: 'bg-green-50',
-  },
-  {
     value: 'security',
     title: 'Security',
-    description: 'Audit, hardening, threat model.',
+    description: 'Find risks before launch. Audits and hardening.',
     icon: <Shield />,
     iconBg: 'bg-rose-50',
   },
   {
     value: 'marketing',
     title: 'Marketing',
-    description: 'Positioning, launch, copy.',
+    description: 'Positioning, launch plan, landing copy.',
     icon: <Megaphone />,
     iconBg: 'bg-fuchsia-50',
   },
@@ -66,7 +51,8 @@ const NEEDS = [
 
 /**
  * Step 3 — What do you need?
- * Multi-select. Defaults to "plan" (Sarah is almost always the right first hire).
+ * Multi-select. Defaults to "plan" — Sarah is almost always the right first
+ * hire because she scopes the work for everyone else.
  */
 export default async function OnboardingNeedsPage({
   searchParams,
@@ -74,6 +60,13 @@ export default async function OnboardingNeedsPage({
   const params = await searchParams;
   const carriedNeeds = toArray(params.need);
   const preselected = carriedNeeds.length > 0 ? new Set(carriedNeeds) : new Set(['plan']);
+
+  const devIncluded =
+    preselected.has('development') ||
+    preselected.has('frontend') ||
+    preselected.has('backend');
+  const devFrontend = preselected.has('frontend');
+  const devBackend = preselected.has('backend');
 
   const backHref =
     params.type === 'existing' ? '/app/onboarding/connect' : '/app/onboarding/describe';
@@ -96,7 +89,26 @@ export default async function OnboardingNeedsPage({
         {params.desc ? <input type="hidden" name="desc" value={params.desc} /> : null}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {NEEDS.map((n) => (
+          {/* Plan + Design first */}
+          {NEEDS.slice(0, 2).map((n) => (
+            <NeedToggleCard
+              key={n.value}
+              value={n.value}
+              title={n.title}
+              description={n.description}
+              icon={n.icon}
+              iconBg={n.iconBg}
+              defaultChecked={preselected.has(n.value)}
+            />
+          ))}
+          {/* Development — special card with frontend/backend customise */}
+          <DevelopmentNeedCard
+            defaultIncluded={devIncluded}
+            defaultFrontend={devFrontend}
+            defaultBackend={devBackend}
+          />
+          {/* Security + Marketing */}
+          {NEEDS.slice(2).map((n) => (
             <NeedToggleCard
               key={n.value}
               value={n.value}

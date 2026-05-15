@@ -84,6 +84,20 @@ export default async function HirePage({
         })}
       </nav>
 
+      {activeCategory === 'engineering' ? (
+        <aside className="mb-6 rounded-lg border border-indigo-200 bg-indigo-50/40 p-5">
+          <p className="font-mono text-[10px] tracking-widest text-indigo-700 uppercase">
+            Not sure who you need?
+          </p>
+          <p className="mt-2 text-sm text-warm-700">
+            Hire <strong className="font-medium">Lena</strong> if you want to start with what
+            users see (the screens and buttons).{' '}
+            Hire <strong className="font-medium">Marcus</strong> if your product needs data,
+            APIs, or integrations from day one. Most projects end up wanting both.
+          </p>
+        </aside>
+      ) : null}
+
       {visible.length === 0 ? (
         <p className="rounded-lg border border-dashed border-warm-300 p-10 text-center text-warm-500">
           No agents in this category yet.

@@ -11,7 +11,15 @@ import { redirect } from 'next/navigation';
  * action will write a Project + Team doc instead of redirecting to /demo.
  */
 
-const ALLOWED_NEEDS = new Set(['plan', 'design', 'frontend', 'backend', 'security', 'marketing']);
+const ALLOWED_NEEDS = new Set([
+  'plan',
+  'design',
+  'development', // shorthand for "frontend AND backend"
+  'frontend',
+  'backend',
+  'security',
+  'marketing',
+]);
 const ALLOWED_TYPES = new Set(['fresh', 'existing']);
 
 export async function submitDescribeAction(formData: FormData): Promise<void> {

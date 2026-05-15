@@ -24,15 +24,17 @@ interface PageProps {
  * Step 4 — Meet your first agent.
  *
  * Picks a recommendation from the selected needs:
- *   plan      → Sarah (PM)
- *   design    → Alex
- *   frontend  → Lena
- *   backend   → Marcus
- *   security  → Ryan
- *   marketing → Mia
+ *   plan         → Sarah (PM)
+ *   design       → Alex
+ *   development  → Lena (UI-first default for combined dev)
+ *   frontend     → Lena
+ *   backend      → Marcus
+ *   security     → Ryan
+ *   marketing    → Mia
  *
  * If multiple are selected, Sarah is usually the right first hire (she
  * scopes the project for everyone else). The fallback is also Sarah.
+ * See features/onboarding/lib/recommend.ts for the full priority order.
  */
 export default async function OnboardingMeetPage({
   searchParams,

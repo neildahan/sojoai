@@ -14,15 +14,26 @@ describe('pickFirstAgent', () => {
 
   it('walks the priority order when plan is absent', () => {
     expect(pickFirstAgent(['design'])).toBe('alex');
+    expect(pickFirstAgent(['development'])).toBe('lena');
     expect(pickFirstAgent(['frontend'])).toBe('lena');
     expect(pickFirstAgent(['backend'])).toBe('marcus');
     expect(pickFirstAgent(['security'])).toBe('ryan');
     expect(pickFirstAgent(['marketing'])).toBe('mia');
   });
 
-  it('picks design over backend when both are selected (priority order)', () => {
+  it('treats "development" as Lena (frontend default — UI is most tangible)', () => {
+    expect(pickFirstAgent(['development'])).toBe('lena');
+    expect(pickFirstAgent(['development', 'security'])).toBe('lena');
+  });
+
+  it('picks design over development when both are selected (priority order)', () => {
+    expect(pickFirstAgent(['development', 'design'])).toBe('alex');
     expect(pickFirstAgent(['backend', 'design'])).toBe('alex');
-    expect(pickFirstAgent(['security', 'frontend'])).toBe('lena');
+  });
+
+  it('frontend takes precedence over backend when both are picked alongside development sibling', () => {
+    expect(pickFirstAgent(['frontend', 'backend'])).toBe('lena');
+    expect(pickFirstAgent(['backend', 'frontend'])).toBe('lena');
   });
 
   it('falls back to Sarah for unknown needs', () => {
