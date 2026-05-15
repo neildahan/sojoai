@@ -90,12 +90,7 @@ export default async function OnboardingMeetPage({
 
       <form action={hireFirstAgentAction} className="mt-8 flex items-center justify-between gap-3">
         <Link
-          href={`/app/onboarding/needs?${new URLSearchParams({
-            ...(params.type ? { type: params.type } : {}),
-            ...(params.name ? { name: params.name } : {}),
-            ...(params.desc ? { desc: params.desc } : {}),
-            ...Object.fromEntries(needs.map((n) => ['need', n])),
-          }).toString()}`}
+          href={`/app/onboarding/needs?${buildBackQuery(params.type, params.name, params.desc, needs)}`}
           className={buttonVariants({ intent: 'ghost', size: 'md' })}
         >
           Back
@@ -119,4 +114,24 @@ export default async function OnboardingMeetPage({
 function toArray(v: string | string[] | undefined): string[] {
   if (!v) return [];
   return Array.isArray(v) ? v : [v];
+}
+
+/**
+ * Build the back-to-Step-3 URL preserving every selected need.
+ * Using `Object.fromEntries(...)` for repeated keys silently drops all but
+ * the last value — caused multi-select state to collapse to a single need
+ * when the user clicked Back. URLSearchParams.append handles repeats.
+ */
+function buildBackQuery(
+  type: string | undefined,
+  name: string | undefined,
+  desc: string | undefined,
+  needs: readonly string[],
+): string {
+  const sp = new URLSearchParams();
+  if (type) sp.set('type', type);
+  if (name) sp.set('name', name);
+  if (desc) sp.set('desc', desc);
+  for (const n of needs) sp.append('need', n);
+  return sp.toString();
 }
