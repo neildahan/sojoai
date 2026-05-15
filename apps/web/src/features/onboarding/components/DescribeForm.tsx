@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Sparkles, Loader, X } from 'lucide-react';
+import { Sparkles, Loader, X, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -139,6 +139,19 @@ export function DescribeForm({ error }: DescribeFormProps): React.ReactElement {
                 {s}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={suggest}
+              disabled={loading || !canSuggest}
+              aria-label="Generate new suggestions"
+              title="Try again"
+              className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-warm-500 hover:text-indigo-600 disabled:opacity-40"
+            >
+              <RefreshCw
+                className={cn('h-3.5 w-3.5', loading && 'animate-spin')}
+                aria-hidden="true"
+              />
+            </button>
             <button
               type="button"
               onClick={() => setSuggestions([])}

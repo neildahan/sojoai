@@ -27,14 +27,28 @@ const BodySchema = z.object({
   description: z.string().min(10).max(500),
 });
 
-const SYSTEM_PROMPT = [
-  'You generate brandable software project names.',
-  'Output exactly 4 names, one per line.',
-  'Rules: no numbering, no quotes, no explanation, no trailing punctuation.',
-  'Names should be: 1–3 words, memorable, distinct, brand-style (not literal description).',
-  'Avoid: numbers, the suffix "AI"/"Tech"/"Lab", and generic words like "Project", "App", "Platform".',
-  'Prefer: short coined words, evocative metaphors, single nouns.',
-].join(' ');
+const SYSTEM_PROMPT = `You are a top brand strategist naming early-stage software products. You produce names that feel like real, ownable brands — not descriptions of what the product does.
+
+Output rules:
+- Exactly 4 names, one per line.
+- No numbering, no quotes, no explanation, no trailing punctuation, no surrounding text.
+- Each name is ideally 1 word (2 words MAX, and only as an exception).
+- Memorable, easy to spell, easy to say out loud, .com-friendly.
+
+Hard constraints:
+- DO NOT reuse any noun from the user's description.
+- DO NOT use industry vocabulary that gives away the domain. For example, for an insurance product, REJECT: Coverage, Claim, Policy, Adjuster, Underwrite, Risk, Insure, Premium, Meridian, Nexus. For a fitness product, REJECT: Train, Fit, Run, Pace, Workout. The name should NOT reveal the industry at first glance.
+- DO NOT use suffixes: AI, Tech, Lab, App, Cloud, Hub, Studio, Suite, OS, IO, .com, .ai.
+- DO NOT use numbers.
+- DO NOT use generic words: Project, App, Platform, Tool, System.
+
+Inspiration — names that succeed because they DON'T describe what the product does:
+  Notion, Linear, Stripe, Vercel, Figma, Cal, Plaid, Asana, Ramp, Brex, Lattice,
+  Mercury, Webflow, Loom, Pitch, Sentry, Mux, Lago, Resend, Retool, Cron, Inngest.
+
+Pull from: short evocative words (Beacon, Anchor, Pulse, Glide, Forge, Spire, Tide, Helm, Atlas, Harbor, Drift), coined/portmanteau (Notion, Vercel, Plaid, Brex), Latin/Greek roots (Lex, Vox, Nova, Aero, Sigma, Astra, Lumen), or repurposed words (Pitch, Sentry, Loom, Ramp, Forge).
+
+Produce 4 names. Output nothing except the 4 names.`;
 
 export async function POST(req: NextRequest): Promise<Response> {
   const { userId } = await auth();
@@ -73,13 +87,17 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   try {
     const message = await client.messages.create({
-      model: MODEL_IDS.haiku,
+      // Sonnet, not Haiku — naming is a creative task and Sonnet's outputs
+      // are visibly more brandable. Token budget stays tiny (4 short names),
+      // so the cost difference is negligible per request.
+      model: MODEL_IDS.sonnet,
       max_tokens: 200,
+      temperature: 1,
       system: SYSTEM_PROMPT,
       messages: [
         {
           role: 'user',
-          content: `Project description:\n${body.description}\n\nGenerate 4 name suggestions.`,
+          content: `Project description:\n${body.description}\n\nProduce 4 names that follow every rule. Remember: no industry words, no description words, brand-style only.`,
         },
       ],
     });
@@ -94,7 +112,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     recordUsage({
       projectId: '__suggest__',
       agentId: 'sarah',
-      tier: 'haiku',
+      tier: 'sonnet',
       inputTokens: message.usage.input_tokens,
       outputTokens: message.usage.output_tokens,
     });
