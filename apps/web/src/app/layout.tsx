@@ -51,7 +51,30 @@ export default function RootLayout({
       className={`${fraunces.variable} ${jakarta.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <ClerkProvider>{children}</ClerkProvider>
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: '#1A1814',
+              colorBackground: '#FEFEFE',
+              colorText: '#28251F',
+              colorTextSecondary: '#78746A',
+              colorInputBackground: '#FEFEFE',
+              colorInputText: '#28251F',
+              colorDanger: '#EF4444',
+              colorSuccess: '#22C55E',
+              colorWarning: '#F59E0B',
+              colorNeutral: '#78746A',
+              borderRadius: '0.625rem',
+              fontFamily: 'var(--font-jakarta), ui-sans-serif, system-ui, sans-serif',
+            },
+            elements: {
+              card: 'shadow-card border border-warm-200',
+              headerTitle: 'font-display italic',
+            },
+          }}
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );
