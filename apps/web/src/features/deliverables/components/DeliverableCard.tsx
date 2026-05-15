@@ -81,8 +81,10 @@ export function DeliverableCard({
         </Link>
         <button
           type="button"
-          aria-label="Download"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-warm-200 text-warm-700 hover:bg-warm-50"
+          aria-label="Download (coming soon)"
+          title="Download — wires up once exports are added"
+          disabled
+          className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-warm-200 text-warm-400 disabled:cursor-not-allowed"
         >
           <Download className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
