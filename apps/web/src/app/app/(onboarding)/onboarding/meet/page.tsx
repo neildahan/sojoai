@@ -5,7 +5,8 @@ import { WizardStepIndicator } from '@/features/onboarding/components/WizardStep
 import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { getAgent, type AgentId } from '@/lib/agents/registry';
+import { getAgent } from '@/lib/agents/registry';
+import { pickFirstAgent } from '@/features/onboarding/lib/recommend';
 import { hireFirstAgentAction } from '../actions';
 
 export const metadata = { title: 'Meet your first agent' };
@@ -115,27 +116,4 @@ export default async function OnboardingMeetPage({
 function toArray(v: string | string[] | undefined): string[] {
   if (!v) return [];
   return Array.isArray(v) ? v : [v];
-}
-
-const NEED_TO_AGENT: Record<string, AgentId> = {
-  plan: 'sarah',
-  design: 'alex',
-  frontend: 'lena',
-  backend: 'marcus',
-  security: 'ryan',
-  marketing: 'mia',
-};
-
-/**
- * If the user picked planning, recommend Sarah — she scopes the project
- * for everyone else. Otherwise pick the first matching agent from the
- * canonical need order, falling back to Sarah.
- */
-function pickFirstAgent(needs: string[]): AgentId {
-  if (needs.includes('plan') || needs.length === 0) return 'sarah';
-  const order = ['design', 'frontend', 'backend', 'security', 'marketing'];
-  for (const n of order) {
-    if (needs.includes(n) && NEED_TO_AGENT[n]) return NEED_TO_AGENT[n] as AgentId;
-  }
-  return 'sarah';
 }
