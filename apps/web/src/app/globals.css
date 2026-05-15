@@ -134,6 +134,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Tailwind 4 preflight strips cursor styles from button. Bring it back —
+   every interactive button should feel clickable. Disabled stays default. */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
 /* Respect reduced-motion preference for the office-floor animations */
 @media (prefers-reduced-motion: reduce) {
   *,
