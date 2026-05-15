@@ -1,6 +1,7 @@
 import * as React from 'react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MessageSquare } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
 import { StatusRing } from '@/features/agents/components/StatusRing';
 import { ChatPanel } from '@/features/chat/components/ChatPanel';
@@ -15,14 +16,14 @@ interface PageProps {
 }
 
 /**
- * /app/[projectId]/messages/[agentId] — direct message with one agent.
+ * /app/[projectId]/messages/[agentId] — one-on-one DM with an agent.
  *
- * Layout: two-column — Chat (65%) + Deliverables panel (35%).
- * Deliverables panel becomes real once Mongo + agents land; for now it's a
- * placeholder empty state.
+ * Renders inside the WhatsApp-style messages layout — the ConversationList
+ * is already on the left, so this page only owns the right column: agent
+ * header + thread + input.
  *
- * Initial messages: stubbed greeting from the agent. Replaced with the real
- * conversation history (`Conversation.messages`) once Mongo is wired.
+ * Initial messages: stubbed greeting from the agent. Replaced with real
+ * Conversation history once Mongo is wired.
  */
 export default async function AgentDMPage({ params }: PageProps): Promise<React.ReactElement> {
   const { projectId, agentId: rawAgentId } = await params;
@@ -43,46 +44,46 @@ export default async function AgentDMPage({ params }: PageProps): Promise<React.
   ];
 
   return (
-    <div className="grid h-[calc(100vh-0px)] grid-cols-1 lg:grid-cols-[1fr_360px]">
-      <section className="flex min-h-0 flex-col">
-        {/* Agent header */}
-        <header className="flex items-center justify-between gap-3 border-b border-warm-200 bg-surface-page/85 px-6 py-3 backdrop-blur">
-          <div className="flex items-center gap-3 min-w-0">
-            <AgentIconWrap agentId={agentId} size="md" />
-            <div className="min-w-0">
-              <h1 className="font-display text-base italic text-warm-900">{agent.name}</h1>
-              <p className="text-xs text-warm-500 truncate">{agent.role}</p>
+    <section className="flex h-full flex-col">
+      <header className="flex items-center justify-between gap-3 border-b border-warm-200 bg-surface-page/85 px-4 py-3 backdrop-blur sm:px-6">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Mobile-only back to list */}
+          <Link
+            href={`/app/${projectId}/messages`}
+            aria-label="Back to messages"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-warm-700 hover:bg-warm-100 lg:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <AgentIconWrap agentId={agentId} size="md" />
+          <div className="min-w-0">
+            <h1 className="font-display text-base italic text-warm-900 truncate">
+              {agent.name}
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <StatusRing status="active" />
+              <span className="text-xs text-warm-500 truncate">{agent.role} · active</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <StatusRing status="active" />
-            <Badge intent="success" size="sm">
-              active
-            </Badge>
-          </div>
-        </header>
-
-        {/* Conversation */}
-        <div className="min-h-0 flex-1 bg-surface-page">
-          <ChatPanel projectId={projectId} agentId={agentId} initialMessages={initialMessages} />
         </div>
-      </section>
-
-      {/* Deliverables panel */}
-      <aside className="hidden border-l border-warm-200 bg-surface-card lg:flex lg:flex-col">
-        <header className="flex items-center gap-2 border-b border-warm-200 px-5 py-4">
-          <MessageSquare className="h-4 w-4 text-warm-500" aria-hidden="true" />
-          <span className="font-mono text-[10px] tracking-widest text-warm-500 uppercase">
-            Deliverables from {agent.name}
-          </span>
-        </header>
-        <div className="flex flex-1 items-center justify-center px-6 text-center">
-          <p className="text-sm text-warm-500">
-            No deliverables yet. Once {agent.name} ships something, it&rsquo;ll show up here.
-          </p>
+        <div className="flex items-center gap-2">
+          <Badge intent="accent" size="sm">
+            {agent.defaultModel}
+          </Badge>
+          <Link
+            href={`/app/${projectId}/deliverables`}
+            aria-label="View deliverables"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-warm-700 hover:bg-warm-100"
+          >
+            <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+            Deliverables
+          </Link>
         </div>
-      </aside>
+      </header>
 
-    </div>
+      <div className="min-h-0 flex-1 bg-surface-page">
+        <ChatPanel projectId={projectId} agentId={agentId} initialMessages={initialMessages} />
+      </div>
+    </section>
   );
 }
