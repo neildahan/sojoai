@@ -27,32 +27,40 @@ const BodySchema = z.object({
   description: z.string().min(10).max(500),
 });
 
-const SYSTEM_PROMPT = `You are a top brand strategist naming early-stage software products. You produce names that feel like real, ownable brands — not descriptions of what the product does.
+const SYSTEM_PROMPT = `You are a top brand strategist naming early-stage software products. Your goal: names that feel RIGHT for the user's product without being literal descriptions or industry jargon.
+
+The trick: real brands evoke the FEELING of their field, not its vocabulary.
+- Insurance brands (trust / shelter / foundation): Lemonade, Hippo, Root, Coalition, Coterie, Ladder, Pie.
+- Payments brands (flow / settlement / clean): Stripe, Plaid, Brex, Ramp, Mercury.
+- Productivity brands (thought / structure / motion): Notion, Linear, Asana, Coda, Roam.
+- Health brands (vitality / care / life): Calm, Headspace, Oura, Ro, Hims.
+- Communications (voice / channel): Slack, Loom, Discord, Twilio.
+
+Notice none of those say "insurance", "payments", "productivity" etc. directly — they evoke a quality (shelter, flow, thought) associated with the field. That's the bullseye.
+
+How to approach a name:
+1. Read the description. Infer the field implicitly.
+2. Identify the CORE VALUE that field promises (e.g. insurance → trust/safety; payments → speed/clarity; therapy → presence/calm).
+3. Generate 4 names that EVOKE that value through metaphor — without using the field's vocabulary.
 
 Output rules:
-- Exactly 4 names, one per line.
-- No numbering, no quotes, no explanation, no trailing punctuation, no surrounding text.
-- Each name is ideally 1 word (2 words MAX, and only as an exception).
+- Exactly 4 names, one per line. No numbering, quotes, explanation, surrounding text.
+- 1 word ideally, 2 max as exception.
 - Memorable, easy to spell, easy to say out loud, .com-friendly.
+- MIX it up: at least 2 of the 4 should clearly evoke the field's core value via metaphor (e.g. for insurance: Shelter, Anchor, Haven). The other 1-2 can lean more abstract/coined.
 
 Hard constraints:
 - DO NOT reuse any noun from the user's description.
-- DO NOT use industry vocabulary that gives away the domain. For example, for an insurance product, REJECT: Coverage, Claim, Policy, Adjuster, Underwrite, Risk, Insure, Premium, Meridian, Nexus. For a fitness product, REJECT: Train, Fit, Run, Pace, Workout. The name should NOT reveal the industry at first glance.
+- DO NOT use the field's literal vocabulary. Insurance products: REJECT Insure, Claim, Policy, Coverage, Premium, Underwrite, Adjuster, Risk. Fitness: REJECT Train, Fit, Run, Pace. Etc.
 - DO NOT use suffixes: AI, Tech, Lab, App, Cloud, Hub, Studio, Suite, OS, IO, .com, .ai.
-- DO NOT use numbers.
-- DO NOT use generic words: Project, App, Platform, Tool, System.
+- DO NOT use numbers or generic words (Project, App, Platform, Tool, System).
 
-CRITICAL — Avoid existing brands:
-DO NOT suggest the name of any existing well-known software, SaaS, or consumer brand. Before you write each name, mentally verify: "Is this already an existing software company, app, framework, or consumer product?" If yes, REPLACE IT.
+CRITICAL — existing brands are off-limits:
+DO NOT suggest the name of any well-known software, SaaS, or consumer brand — including the inspiration examples I listed above (Lemonade, Stripe, Notion, etc. are illustrative; you must NOT use them as your suggestion). Before sending each name, mentally check: "Is this already a real product?" If yes, replace it.
 
-Known software brands you MUST NOT propose (non-exhaustive, treat as forbidden):
-Notion, Stripe, Linear, Vercel, Figma, Cal, Plaid, Asana, Ramp, Brex, Lattice, Mercury, Webflow, Loom, Pitch, Sentry, Mux, Lago, Resend, Retool, Inngest, Slack, Zoom, Discord, Twilio, Datadog, Heroku, Auth0, Clerk, MongoDB, Hubspot, Salesforce, Quora, Drift, Velo, Intercom, Zendesk, Airtable, Coda, Miro, Linear, Stripe, Render, Fly, Railway, Supabase, PlanetScale, Neon, Cloudflare, Anthropic, OpenAI, Replicate, Hugging, Pinecone, Weights, Chroma, Cohere, Perplexity, Crystal, Stream, Pusher, Ably, Algolia, Mixpanel, Segment, Amplitude, PostHog, LaunchDarkly, Statsig, Persona, Stytch, WorkOS, Trello, Jira, Confluence, Basecamp, Monday, Smartsheet, ClickUp, Coda, Roam, Obsidian, Bear, Craft, Tana, Mem.
+Look for words like: Anchor, Beacon, Atlas, Harbor, Haven, Shelter, Pillar, Bedrock, Cornerstone, Sentinel, Lumen, Tide, Helm, Spire, Forge, Glide, Pulse, Lattice, Compass, Foundry, Crest, Sprout, Bloom, Quill, Aurora, Echo, Lumos, Vela, Nova, Sigma, Aero, Tessera, Mosaic.
 
-The list above is incomplete — use general knowledge. If a name sounds even vaguely familiar from another product, replace it.
-
-Pull from: short evocative words (Beacon, Anchor, Pulse, Glide, Forge, Spire, Tide, Helm, Atlas, Harbor), coined/portmanteau (made-up but pronounceable), Latin/Greek roots (Lex, Vox, Nova, Aero, Sigma, Astra, Lumen), or repurposed words. The treasure is in coined words that don't yet have brand owners.
-
-Output ONLY the 4 names. After generating, mentally re-check each: is it an existing software brand? If yes, replace before sending.`;
+Output ONLY the 4 names. Re-check each against your "is this a real product?" filter before sending.`;
 
 export async function POST(req: NextRequest): Promise<Response> {
   const { userId } = await auth();
@@ -178,5 +186,10 @@ const BRAND_DENYLIST = new Set(
     'tana', 'mem', 'github', 'gitlab', 'bitbucket', 'docker', 'kubernetes',
     'aws', 'gcp', 'azure', 'snowflake', 'databricks', 'tableau', 'looker',
     'apollo', 'gusto', 'rippling', 'deel', 'attio', 'pipedrive', 'monday',
+    // Verticals — well-known consumer/SaaS brands beyond pure dev tools
+    'lemonade', 'hippo', 'root', 'coalition', 'coterie', 'ladder', 'pie', 'acko',
+    'wefox', 'next', 'oscar', 'bright', 'metromile', 'allstate', 'progressive',
+    'calm', 'headspace', 'oura', 'whoop', 'strava', 'peloton', 'noom',
+    'ro', 'hims', 'forward', 'tia', 'maven',
   ].map((s) => s.toLowerCase()),
 );
