@@ -1,15 +1,10 @@
 import * as React from 'react';
-import Link from 'next/link';
 import { WizardStepIndicator } from '@/features/onboarding/components/WizardStepIndicator';
-import { HireSubmitButton } from '@/features/onboarding/components/HireSubmitButton';
-import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
-import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
-import { getAgent, type AgentId } from '@/lib/agents/registry';
+import { MeetTeamForm } from '@/features/onboarding/components/MeetTeamForm';
 import { mapNeedsToTeam } from '@/features/onboarding/lib/recommend';
 import { hireFirstAgentAction } from '../actions';
 
-export const metadata = { title: 'Meet your first agent' };
+export const metadata = { title: 'Meet your team' };
 
 interface PageProps {
   searchParams: Promise<{
@@ -21,16 +16,13 @@ interface PageProps {
 }
 
 /**
- * Step 4 — Meet your first agent.
+ * Step 4 — Meet your team.
  *
- * Shows the full team derived from the user's picks, with the recommended
- * first hire as the spotlight card and the remaining team as small
- * follow-up badges. This answers two questions users had:
- *   1. Why only one agent? → Hiring is sequential. One leader scopes the
- *      project so the rest have context.
- *   2. Why this specific one? → Priority order in lib/onboarding/recommend.
- *      See FIRST_HIRE_RATIONALE below for the agent-specific reason
- *      shown to the user.
+ * Shows every agent the wizard recommends, derived from the user's picks
+ * in Step 3. The user can remove any teammate before hiring (Jamie
+ * excepted — he's always-included as the team coordinator). Submitting
+ * `hireFirstAgentAction` creates a Team doc per kept agent. Removals
+ * after onboarding happen one-click from the team room.
  */
 export default async function OnboardingMeetPage({
   searchParams,
@@ -38,164 +30,40 @@ export default async function OnboardingMeetPage({
   const params = await searchParams;
   const needs = toArray(params.need);
   const team = mapNeedsToTeam(needs);
-  const recommended = team[0] ?? 'sarah';
-  const rest = team.slice(1);
-  const agent = getAgent(recommended);
+  const backHref = `/app/onboarding/needs?${buildBackQuery(
+    params.type,
+    params.name,
+    params.desc,
+    needs,
+  )}`;
   const projectLabel = params.name?.trim() || 'your project';
 
   return (
     <div className="w-full max-w-2xl">
       <WizardStepIndicator current={4} total={4} className="mb-8" />
       <h1 className="font-display text-4xl leading-tight font-medium text-warm-900">
-        Meet <em className="text-indigo-600">{agent.name}</em>.
+        Meet your <em className="text-indigo-600">team</em>.
       </h1>
       <p className="mt-3 text-warm-500">
-        Based on what you picked, <span className="font-medium">{agent.name}</span> is the right
-        first hire. {FIRST_HIRE_RATIONALE[recommended]}
+        Based on what you picked, this is the team for <strong>{projectLabel}</strong>. The
+        first agent listed leads the project — the rest pick up work behind them. Remove anyone
+        you don&rsquo;t need; you can add more later from the Hiring Room.
       </p>
 
-      {/* Spotlight — recommended first hire */}
-      <section className="mt-10 flex flex-col gap-5 rounded-lg border border-warm-200 bg-surface-card p-7 shadow-card">
-        <div className="flex items-start gap-4">
-          <AgentIconWrap agentId={agent.id} size="xl" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="font-display text-2xl italic text-warm-900">{agent.name}</h2>
-              <Badge intent="accent" size="sm">
-                {agent.role}
-              </Badge>
-            </div>
-            <p className="mt-2 text-sm text-warm-600">{agent.pitch}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              {agent.personality.map((trait) => (
-                <Badge key={trait} intent="neutral" size="sm">
-                  {trait}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-md bg-indigo-50/60 p-4 text-sm text-indigo-900">
-          <p className="font-medium">What {agent.name} will do for {projectLabel}:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-indigo-900/80">
-            {AGENT_DELIVERABLES[recommended].map((bullet) => (
-              <li key={bullet}>{bullet}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* One-line reassurance — your other wizard picks aren't lost.
-          We don't display them as badges here because that made users
-          think they were also being hired right now. They show up in the
-          team-room "Recommended next hires" section after this step. */}
-      <p className="mt-6 text-xs text-warm-500">
-        We&rsquo;ll only hire {agent.name} now.{' '}
-        {rest.length > 0
-          ? `Your other picks (${rest
-              .map((id) => getAgent(id).name)
-              .join(', ')}) will show up in your team room as recommended next hires — one click each when you're ready.`
-          : `You can hire any of the other 9 agents from the Hiring Room when you need them.`}
-        {' Jamie (Scrum Master) joins automatically.'}
-      </p>
-
-      <form action={hireFirstAgentAction} className="mt-8 flex items-center justify-between gap-3">
-        <Link
-          href={`/app/onboarding/needs?${buildBackQuery(params.type, params.name, params.desc, needs)}`}
-          className={buttonVariants({ intent: 'ghost', size: 'md' })}
-        >
-          Back
-        </Link>
-        <input type="hidden" name="agentId" value={agent.id} />
-        <input type="hidden" name="type" value={params.type ?? 'fresh'} />
-        {params.name ? <input type="hidden" name="name" value={params.name} /> : null}
-        {params.desc ? <input type="hidden" name="desc" value={params.desc} /> : null}
-        {needs.map((n) => (
-          <input key={n} type="hidden" name="need" value={n} />
-        ))}
-        <HireSubmitButton agentName={agent.name} />
-      </form>
+      <div className="mt-10">
+        <MeetTeamForm
+          team={team}
+          projectType={params.type ?? 'fresh'}
+          projectName={params.name ?? ''}
+          projectDesc={params.desc ?? ''}
+          needs={needs}
+          backHref={backHref}
+          action={hireFirstAgentAction}
+        />
+      </div>
     </div>
   );
 }
-
-/**
- * Per-agent rationale shown under the page title so the user understands
- * WHY this specific agent goes first. Keep it short — one sentence.
- */
-const FIRST_HIRE_RATIONALE: Record<AgentId, string> = {
-  sarah:
-    "She's your product manager — she scopes what gets built, prioritises the milestones, and the rest of the team works from her plan. Jamie (Scrum Master) handles the day-to-day coordination alongside her.",
-  alex: "Design comes before code — Lena and Marcus build what Alex draws.",
-  lena: "The UI is the most tangible starting point — easy to react to and easy to iterate.",
-  marcus: "Backend-first makes sense when your product is built around data, integrations, or APIs.",
-  nina: "Testing leads when you're hardening something that already exists.",
-  ryan: "Security audit first when the risk surface is the unknown.",
-  david: "DevOps leads when shipping reliably is the bottleneck.",
-  mia: "Marketing first when distribution is the harder problem than the build.",
-  kai: "Social first when the product is the audience itself.",
-  jamie: "Coordination first when the team is already in motion.",
-};
-
-/**
- * Per-agent "what they'll do" bullets shown in the spotlight card.
- * Used to be a single hardcoded list — which read as PM-shaped even when
- * the recommended agent was Alex or Lena. Each agent now gets bullets
- * that match what they actually deliver.
- */
-const AGENT_DELIVERABLES: Record<AgentId, string[]> = {
-  sarah: [
-    'Own the product direction — scope, priorities, and milestones.',
-    'Turn your idea into a PRD with goals, users, and open questions.',
-    'Hand off context to every agent you hire — they all read the same brain.',
-  ],
-  alex: [
-    'Read the PRD (or your description) and propose a visual direction.',
-    'Ship wireframes, key screens, and the starting design system.',
-    'Hand the design off to Lena to build.',
-  ],
-  lena: [
-    'Scaffold the project and build the initial UI from the design or description.',
-    'Wire the frontend up to whatever backend exists or is coming.',
-    'Pair with Marcus on the API contract when it matters.',
-  ],
-  marcus: [
-    'Design the data model and the API shape.',
-    'Build the endpoints, auth, and integrations the product needs.',
-    'Hand the contract off to Lena so the frontend can wire in.',
-  ],
-  nina: [
-    'Write a test plan covering the critical user paths.',
-    'Catch regressions before each release.',
-    'Flag bugs back to whoever owns the code.',
-  ],
-  ryan: [
-    'Audit the current code (or planned architecture) for security issues.',
-    'Produce a prioritised hardening plan.',
-    'Re-verify after fixes ship.',
-  ],
-  david: [
-    'Set up the deployment pipeline and infrastructure.',
-    'Wire up monitoring, logs, and alerts.',
-    'Make shipping a non-event.',
-  ],
-  mia: [
-    'Develop the positioning and the launch plan.',
-    'Write landing-page copy, email sequences, and announcement posts.',
-    'Coordinate with Kai on social channels.',
-  ],
-  kai: [
-    'Write social posts, threads, and launch announcements.',
-    'Track what resonates and double down on it.',
-    'Coordinate with Mia on the broader campaign.',
-  ],
-  jamie: [
-    'Run daily standups across the team.',
-    'Flag blockers early so you can unblock the team fast.',
-    'Compile a daily digest you can read in 60 seconds.',
-  ],
-};
 
 function toArray(v: string | string[] | undefined): string[] {
   if (!v) return [];
@@ -204,7 +72,7 @@ function toArray(v: string | string[] | undefined): string[] {
 
 /**
  * Build the back-to-Step-3 URL preserving every selected need.
- * URLSearchParams.append handles repeated keys (Object.fromEntries does not).
+ * URLSearchParams.append handles repeated keys (Object.fromEntries doesn't).
  */
 function buildBackQuery(
   type: string | undefined,

@@ -5,6 +5,7 @@ import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
 import { StatusRing, type AgentStatus } from '@/features/agents/components/StatusRing';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
+import { RemoveAgentButton } from './RemoveAgentButton';
 import { getAgent, type AgentId } from '@/lib/agents/registry';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +34,9 @@ export interface DeskCardProps {
   currentTask?: string;
   /** 0–100. */
   progress?: number;
+  /** Optional server action to remove the agent from the team. When
+   *  provided, a small "Remove" control renders in the footer. */
+  removeAction?: (data: FormData) => void | Promise<void>;
   className?: string;
 }
 
@@ -42,6 +46,7 @@ export function DeskCard({
   status,
   currentTask,
   progress,
+  removeAction,
   className,
 }: DeskCardProps): React.ReactElement {
   const agent = getAgent(agentId);
@@ -89,18 +94,31 @@ export function DeskCard({
         </div>
       ) : null}
 
-      <footer className="flex items-center justify-between">
-        <Badge intent={status === 'blocked' ? 'danger' : status === 'busy' ? 'warning' : 'success'} size="sm">
+      <footer className="flex items-center justify-between gap-2">
+        <Badge
+          intent={status === 'blocked' ? 'danger' : status === 'busy' ? 'warning' : 'success'}
+          size="sm"
+        >
           {status}
         </Badge>
-        <Link
-          href={`/app/${projectId}/messages/${agentId}`}
-          className={cn(buttonVariants({ intent: 'ghost', size: 'sm' }), 'gap-1.5 px-2.5')}
-          aria-label={`Message ${agent.name}`}
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Message
-        </Link>
+        <div className="flex items-center gap-1">
+          {removeAction ? (
+            <RemoveAgentButton
+              projectId={projectId}
+              agentId={agentId}
+              agentName={agent.name}
+              action={removeAction}
+            />
+          ) : null}
+          <Link
+            href={`/app/${projectId}/messages/${agentId}`}
+            className={cn(buttonVariants({ intent: 'ghost', size: 'sm' }), 'gap-1.5 px-2.5')}
+            aria-label={`Message ${agent.name}`}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Message
+          </Link>
+        </div>
       </footer>
     </article>
   );

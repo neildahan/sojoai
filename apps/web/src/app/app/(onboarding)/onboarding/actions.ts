@@ -62,10 +62,15 @@ export async function hireFirstAgentAction(formData: FormData): Promise<void> {
   }
 
   // Parse + validate form data
-  const agentId = String(formData.get('agentId') ?? 'sarah');
-  if (!isAgentId(agentId)) {
+  // Multi-agent: every kept agent on the meet step submits one `agentId`.
+  const agentIds = formData
+    .getAll('agentId')
+    .map((v) => String(v))
+    .filter(isAgentId);
+  if (agentIds.length === 0) {
     redirect('/app/home');
   }
+  const leadAgent = agentIds[0]!; // first kept = the recommended lead
 
   const name = String(formData.get('name') ?? '').trim().slice(0, 80);
   const description = String(formData.get('desc') ?? '').trim().slice(0, 500);
@@ -117,26 +122,27 @@ export async function hireFirstAgentAction(formData: FormData): Promise<void> {
     initialNeeds: needs,
   });
 
-  // 3. Hire ONLY the recommended first agent + Jamie (always coordinator).
-  //    The other agents the wizard suggested stay UN-hired — they appear
-  //    on the team room as "Recommended next" with a Hire button. This
-  //    keeps the distinction clear: hired vs suggested.
-  await Team.insertMany([
-    {
-      projectId: project._id,
-      agentId,
-      status: 'active',
-      currentTask: `Reading ${name}'s description`,
-      progress: 0,
-    },
-    {
+  // 3. Auto-hire the kept agents (from the meet step) plus Jamie.
+  //    The lead (first kept agent) starts 'active' with an initial task;
+  //    the rest come in 'idle' until they pick up work. Removals from
+  //    the team are one-click in the team room.
+  const teamDocs = agentIds.map((id) => ({
+    projectId: project._id,
+    agentId: id,
+    status: id === leadAgent ? ('active' as const) : ('idle' as const),
+    currentTask: id === leadAgent ? `Reading ${name}'s description` : '',
+    progress: 0,
+  }));
+  if (!agentIds.includes('jamie')) {
+    teamDocs.push({
       projectId: project._id,
       agentId: 'jamie',
-      status: 'active',
+      status: 'active' as const,
       currentTask: 'Coordinating the team',
       progress: 0,
-    },
-  ]);
+    });
+  }
+  await Team.insertMany(teamDocs);
 
   // 4. Initialise ProjectBrain with the description.
   await ProjectBrain.create({
@@ -145,5 +151,5 @@ export async function hireFirstAgentAction(formData: FormData): Promise<void> {
   });
 
   // 5. Off to the workspace.
-  redirect(`/app/${String(project._id)}/team-room?welcome=${agentId}`);
+  redirect(`/app/${String(project._id)}/team-room?welcome=${leadAgent}`);
 }

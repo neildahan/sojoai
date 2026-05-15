@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Plus, Play, ArrowRight } from 'lucide-react';
+import { Plus, Play } from 'lucide-react';
 import mongoose from 'mongoose';
 import { auth } from '@clerk/nextjs/server';
 import { PageWrapper } from '@/components/layout/PageWrapper';
@@ -9,14 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { DeskCard } from '@/features/office-floor/components/DeskCard';
 import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
-import { SuggestedHireCard } from '@/features/hiring/components/SuggestedHireCard';
 import { WelcomeBanner } from '@/features/onboarding/components/WelcomeBanner';
-import { mapNeedsToTeam } from '@/features/onboarding/lib/recommend';
 import { connectDb } from '@/lib/db/connect';
 import { Project, Team, User } from '@/lib/db/models';
 import { getAgent, isAgentId, type AgentId } from '@/lib/agents/registry';
 import type { AgentStatus } from '@/features/agents/components/StatusRing';
-import { hireAgentAction } from '@/app/app/[projectId]/hire/actions';
+import { removeAgentAction } from './actions';
 
 export const metadata = { title: 'Team Room' };
 
@@ -95,10 +93,6 @@ export default async function TeamRoomPage({
       progress: typeof t.progress === 'number' && t.progress > 0 ? t.progress : undefined,
     }));
 
-  // Suggested next hires: from the wizard's needs minus anyone already hired.
-  const recommendedTeam = mapNeedsToTeam(project.initialNeeds ?? []);
-  const suggestedHires = recommendedTeam.filter((id) => !hiredIds.has(id));
-
   const welcomeAgent = welcome && isAgentId(welcome) ? (welcome as AgentId) : null;
   const activeCount = hiredDesks.filter((d) => d.status === 'active').length;
   const busyCount = hiredDesks.filter((d) => d.status === 'busy').length;
@@ -164,6 +158,7 @@ export default async function TeamRoomPage({
                 status={d.status}
                 currentTask={d.currentTask}
                 progress={d.progress}
+                removeAction={removeAgentAction}
               />
             ))}
           </div>
@@ -182,51 +177,18 @@ export default async function TeamRoomPage({
         ) : null}
       </section>
 
-      {/* ─── Recommended next hires ─── */}
-      {suggestedHires.length > 0 ? (
-        <section>
-          <header className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <h2 className="font-mono text-[10px] tracking-widest text-warm-500 uppercase">
-                Recommended next hires
-              </h2>
-              <p className="mt-1 text-sm text-warm-500">
-                Based on what you picked at onboarding. They aren&rsquo;t on the team yet — hire
-                them when you&rsquo;re ready.
-              </p>
-            </div>
-            <Link
-              href={`/app/${String(project._id)}/hire`}
-              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
-            >
-              Or browse all 10 agents
-              <ArrowRight className="h-3 w-3" aria-hidden="true" />
-            </Link>
-          </header>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {suggestedHires.map((id) => (
-              <SuggestedHireCard
-                key={id}
-                agentId={id}
-                projectId={String(project._id)}
-                onHire={hireAgentAction}
-              />
-            ))}
-          </div>
-        </section>
-      ) : (
-        <section className="rounded-lg border border-dashed border-warm-200 bg-surface-card/40 p-6 text-center">
-          <p className="text-sm text-warm-500">
-            You&rsquo;ve hired everyone the wizard suggested. Want more help?{' '}
-            <Link
-              href={`/app/${String(project._id)}/hire`}
-              className="font-medium text-indigo-600 hover:underline"
-            >
-              Browse the full Hiring Room →
-            </Link>
-          </p>
-        </section>
-      )}
+      {/* ─── Browse more from the Hiring Room ─── */}
+      <section className="rounded-lg border border-dashed border-warm-200 bg-surface-card/40 p-6 text-center">
+        <p className="text-sm text-warm-500">
+          Want more help? Browse the full Hiring Room for any of the 10 agents.{' '}
+          <Link
+            href={`/app/${String(project._id)}/hire`}
+            className="font-medium text-indigo-600 hover:underline"
+          >
+            Open Hiring Room →
+          </Link>
+        </p>
+      </section>
     </PageWrapper>
   );
 }
