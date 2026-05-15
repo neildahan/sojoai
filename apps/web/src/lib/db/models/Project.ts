@@ -18,6 +18,13 @@ const ProjectSchema = new Schema(
     type: { type: String, enum: ['greenfield', 'existing'], default: 'greenfield' },
     status: { type: String, enum: ['active', 'archived'], default: 'active' },
 
+    /**
+     * The "needs" the user picked in onboarding Step 3 (plan, design,
+     * development, qa, security, marketing, etc.). Used to derive the
+     * recommended-but-not-yet-hired teammates shown on the team room.
+     */
+    initialNeeds: { type: [String], default: [] },
+
     integrations: {
       github: IntegrationSchema,
       figma: IntegrationSchema,

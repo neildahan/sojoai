@@ -5,7 +5,6 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { isAgentId } from '@/lib/agents/registry';
 import { connectDb } from '@/lib/db/connect';
 import { Project, ProjectBrain, Team, User } from '@/lib/db/models';
-import { mapNeedsToTeam } from '@/features/onboarding/lib/recommend';
 
 /**
  * Server actions for the onboarding wizard.
@@ -107,38 +106,37 @@ export async function hireFirstAgentAction(formData: FormData): Promise<void> {
     { upsert: true, new: true },
   );
 
-  // 2. Create the Project.
+  // 2. Create the Project, recording the user's wizard picks so the
+  //    team-room can derive recommended-next-hires from them later.
   const project = await Project.create({
     userId: user._id,
     name,
     description,
     type,
     status: 'active',
+    initialNeeds: needs,
   });
 
-  // 3. Create Team entries for every recommended teammate, plus Jamie
-  //    (the always-included Scrum Master). The recommended first hire
-  //    gets the "active" status; the rest are marked idle until the user
-  //    explicitly hires them from the Hiring Room.
-  const team = mapNeedsToTeam(needs);
-  const teamDocs = team.map((id, idx) => ({
-    projectId: project._id,
-    agentId: id,
-    status: idx === 0 ? 'active' : 'idle',
-    currentTask: idx === 0 ? `Reading ${name}'s description` : '',
-    progress: 0,
-  }));
-  // Always include Jamie as the team coordinator
-  if (!team.includes('jamie')) {
-    teamDocs.push({
+  // 3. Hire ONLY the recommended first agent + Jamie (always coordinator).
+  //    The other agents the wizard suggested stay UN-hired — they appear
+  //    on the team room as "Recommended next" with a Hire button. This
+  //    keeps the distinction clear: hired vs suggested.
+  await Team.insertMany([
+    {
+      projectId: project._id,
+      agentId,
+      status: 'active',
+      currentTask: `Reading ${name}'s description`,
+      progress: 0,
+    },
+    {
       projectId: project._id,
       agentId: 'jamie',
       status: 'active',
       currentTask: 'Coordinating the team',
       progress: 0,
-    });
-  }
-  await Team.insertMany(teamDocs);
+    },
+  ]);
 
   // 4. Initialise ProjectBrain with the description.
   await ProjectBrain.create({
