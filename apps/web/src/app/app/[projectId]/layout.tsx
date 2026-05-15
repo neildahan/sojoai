@@ -32,7 +32,7 @@ export default async function ProjectLayout({
   const isDemo = projectId === 'demo';
 
   return (
-    <div className="flex min-h-screen bg-surface-page">
+    <div className="flex h-screen overflow-hidden bg-surface-page">
       <Sidebar
         brand={
           <span className="flex items-center gap-2 font-display text-lg italic text-warm-50">
