@@ -1,6 +1,5 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { WizardStepIndicator } from '@/features/onboarding/components/WizardStepIndicator';
 import { HireSubmitButton } from '@/features/onboarding/components/HireSubmitButton';
 import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
@@ -87,31 +86,19 @@ export default async function OnboardingMeetPage({
         </div>
       </section>
 
-      {/* Team chips — rest of the picked team plus Jamie (auto-included). */}
-      <section className="mt-8">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="font-mono text-[10px] tracking-widest text-warm-500 uppercase">
-            Then your team will include
-          </span>
-          <ArrowRight className="h-3 w-3 text-warm-400" aria-hidden="true" />
-        </div>
-        <ul className="flex flex-wrap gap-3">
-          {rest.map((id) => (
-            <li key={id}>
-              <TeamMemberBadge agentId={id} />
-            </li>
-          ))}
-          {/* Jamie always-included at the end, with a small Always pill */}
-          <li>
-            <TeamMemberBadge agentId="jamie" alwaysIncluded />
-          </li>
-        </ul>
-        <p className="mt-3 text-xs text-warm-500">
-          {rest.length > 0
-            ? `You'll hire each of them from the Hiring Room once ${agent.name}'s first delivery is ready. Jamie joins every team — he runs your daily standup and unblocks work.`
-            : `Jamie joins every team automatically — he runs your daily standup and unblocks work. You can hire more specialists from the Hiring Room any time.`}
-        </p>
-      </section>
+      {/* One-line reassurance — your other wizard picks aren't lost.
+          We don't display them as badges here because that made users
+          think they were also being hired right now. They show up in the
+          team-room "Recommended next hires" section after this step. */}
+      <p className="mt-6 text-xs text-warm-500">
+        We&rsquo;ll only hire {agent.name} now.{' '}
+        {rest.length > 0
+          ? `Your other picks (${rest
+              .map((id) => getAgent(id).name)
+              .join(', ')}) will show up in your team room as recommended next hires — one click each when you're ready.`
+          : `You can hire any of the other 9 agents from the Hiring Room when you need them.`}
+        {' Jamie (Scrum Master) joins automatically.'}
+      </p>
 
       <form action={hireFirstAgentAction} className="mt-8 flex items-center justify-between gap-3">
         <Link
@@ -130,39 +117,6 @@ export default async function OnboardingMeetPage({
         <HireSubmitButton agentName={agent.name} />
       </form>
     </div>
-  );
-}
-
-function TeamMemberBadge({
-  agentId,
-  alwaysIncluded = false,
-}: {
-  agentId: AgentId;
-  alwaysIncluded?: boolean;
-}): React.ReactElement {
-  const a = getAgent(agentId);
-  return (
-    <span
-      title={alwaysIncluded ? 'Joins every team automatically' : undefined}
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-desk ${
-        alwaysIncluded
-          ? 'border-indigo-200 bg-indigo-50/40'
-          : 'border-warm-200 bg-surface-card'
-      }`}
-    >
-      <AgentIconWrap agentId={agentId} size="sm" />
-      <span className="flex flex-col leading-tight">
-        <span className="flex items-center gap-1.5">
-          <span className="font-display text-sm italic text-warm-900">{a.name}</span>
-          {alwaysIncluded ? (
-            <Badge intent="info" size="sm" className="h-4 px-1.5 text-[9px]">
-              Always
-            </Badge>
-          ) : null}
-        </span>
-        <span className="text-[10px] text-warm-500">{a.role}</span>
-      </span>
-    </span>
   );
 }
 
