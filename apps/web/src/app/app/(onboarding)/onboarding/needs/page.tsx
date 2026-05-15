@@ -88,7 +88,7 @@ export default async function OnboardingNeedsPage({
         {params.name ? <input type="hidden" name="name" value={params.name} /> : null}
         {params.desc ? <input type="hidden" name="desc" value={params.desc} /> : null}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
           {/* Plan + Design first */}
           {NEEDS.slice(0, 2).map((n) => (
             <NeedToggleCard

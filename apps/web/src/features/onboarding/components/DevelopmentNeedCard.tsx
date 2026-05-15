@@ -7,21 +7,19 @@ import { cn } from '@/lib/utils';
 /**
  * DevelopmentNeedCard — Step 3 special-case card for "Development".
  *
- * Default state: a single "Development" card, looks just like the other
- * NeedToggleCards. Once checked, a subtle "Customize" expander appears.
- * Clicking it reveals two sub-checkboxes (Frontend / Backend) so power
- * users can narrow their pick.
+ * One bordered card. The top region is a `<label>` that toggles the
+ * "development" need on/off. Once on, a thin divider and a "Customize"
+ * trigger appear INSIDE the same card border. Click Customize → the
+ * card extends downward (still within its own border) to reveal two
+ * sub-checkboxes (frontend / backend).
  *
- * Form submission model:
- *   - Card unchecked                         → submits nothing
- *   - Checked, customize closed              → submits `need=development`
- *   - Checked, customize open, no sub picked → submits `need=development` (= both)
- *   - Checked, customize open, frontend only → submits `need=frontend`
- *   - Checked, customize open, backend only  → submits `need=backend`
- *   - Checked, customize open, both picked   → submits `need=frontend` AND `need=backend`
- *
- * Hidden `<input name="need">` elements do the actual submission. The
- * visible inputs are sr-only — the label is the click target.
+ * Hidden `<input name="need">` elements do the actual form submission:
+ *   - Card off                                  → submits nothing
+ *   - On, customize closed                      → submits `need=development`
+ *   - On, customize open, no sub picked         → submits `need=development` (= both)
+ *   - On, customize open, frontend only         → submits `need=frontend`
+ *   - On, customize open, backend only          → submits `need=backend`
+ *   - On, customize open, both picked           → submits `need=frontend` AND `need=backend`
  */
 
 export interface DevelopmentNeedCardProps {
@@ -43,7 +41,6 @@ export function DevelopmentNeedCard({
   const [frontend, setFrontend] = React.useState(defaultFrontend);
   const [backend, setBackend] = React.useState(defaultBackend);
 
-  // Compute what we actually submit. See file docblock for the truth table.
   const submittedValues: string[] = React.useMemo(() => {
     if (!included) return [];
     if (!showCustomize || (!frontend && !backend)) return ['development'];
@@ -54,19 +51,16 @@ export function DevelopmentNeedCard({
   }, [included, showCustomize, frontend, backend]);
 
   return (
-    <div className="flex flex-col gap-0">
-      {/* The visible card (mirrors NeedToggleCard styling) */}
-      <label
-        className={cn(
-          'group flex cursor-pointer items-start gap-4 rounded-lg border bg-surface-card p-5 shadow-desk transition-all',
-          'hover:shadow-card focus-within:shadow-glow',
-          included
-            ? 'border-indigo-400 ring-1 ring-indigo-400/40'
-            : 'border-warm-200 hover:border-warm-300',
-          // When customize is open, square the bottom so the panel attaches.
-          included && showCustomize && 'rounded-b-none',
-        )}
-      >
+    <div
+      className={cn(
+        'flex flex-col overflow-hidden rounded-lg border bg-surface-card shadow-desk transition-all',
+        included
+          ? 'border-indigo-400 ring-1 ring-indigo-400/40'
+          : 'border-warm-200',
+      )}
+    >
+      {/* Main toggle area — wraps in a label so the whole row is a click target */}
+      <label className="group flex cursor-pointer items-start gap-4 p-5 hover:bg-warm-50/40 focus-within:bg-warm-50/40">
         <input
           type="checkbox"
           checked={included}
@@ -99,35 +93,33 @@ export function DevelopmentNeedCard({
         </span>
       </label>
 
-      {/* Customize toggle (visible only when included) */}
+      {/* Inline Customize trigger — only when included. Inside the card border. */}
       {included ? (
-        <button
-          type="button"
-          onClick={() => setShowCustomize((v) => !v)}
-          aria-expanded={showCustomize}
-          className={cn(
-            'flex items-center justify-center gap-1.5 self-end px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase transition-colors',
-            'text-warm-500 hover:text-indigo-600',
-            showCustomize ? 'sr-only' : '',
-          )}
-        >
-          {showCustomize ? (
-            <ChevronUp className="h-3 w-3" aria-hidden="true" />
-          ) : (
-            <ChevronDown className="h-3 w-3" aria-hidden="true" />
-          )}
-          Customize
-        </button>
+        <div className="flex items-center justify-end border-t border-warm-200/70 bg-warm-50/40 px-3 py-1.5">
+          <button
+            type="button"
+            onClick={() => setShowCustomize((v) => !v)}
+            aria-expanded={showCustomize}
+            className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-warm-500 uppercase transition-colors hover:text-indigo-600"
+          >
+            {showCustomize ? (
+              <>
+                <ChevronUp className="h-3 w-3" aria-hidden="true" />
+                Hide options
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3" aria-hidden="true" />
+                Customize
+              </>
+            )}
+          </button>
+        </div>
       ) : null}
 
-      {/* Sub-options panel */}
+      {/* Sub-options panel — also inside the card border */}
       {included && showCustomize ? (
-        <div
-          className={cn(
-            'flex flex-col gap-2 rounded-b-lg border border-t-0 bg-indigo-50/30 p-4',
-            'border-indigo-400',
-          )}
-        >
+        <div className="flex flex-col gap-2 border-t border-warm-200/70 bg-indigo-50/30 p-4">
           <p className="mb-1 font-mono text-[10px] tracking-widest text-warm-500 uppercase">
             What kind of development?
           </p>
@@ -148,17 +140,6 @@ export function DevelopmentNeedCard({
           <p className="mt-1 text-[11px] text-warm-500">
             Leave both unchecked for the default <strong className="font-medium">both</strong>.
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              setShowCustomize(false);
-              setFrontend(false);
-              setBackend(false);
-            }}
-            className="self-start text-[11px] text-warm-500 underline hover:text-warm-700"
-          >
-            Close customize
-          </button>
         </div>
       ) : null}
 
@@ -187,7 +168,9 @@ function SubCheckbox({
     <label
       className={cn(
         'flex cursor-pointer items-start gap-3 rounded-md border bg-surface-card p-3 transition-colors',
-        checked ? 'border-indigo-400 ring-1 ring-indigo-400/40' : 'border-warm-200 hover:border-warm-300',
+        checked
+          ? 'border-indigo-400 ring-1 ring-indigo-400/40'
+          : 'border-warm-200 hover:border-warm-300',
       )}
     >
       <input
@@ -197,7 +180,10 @@ function SubCheckbox({
         className="sr-only"
         aria-label={label}
       />
-      <span aria-hidden="true" className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-warm-100 text-warm-700">
+      <span
+        aria-hidden="true"
+        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-warm-100 text-warm-700"
+      >
         {icon}
       </span>
       <div className="min-w-0 flex-1">
