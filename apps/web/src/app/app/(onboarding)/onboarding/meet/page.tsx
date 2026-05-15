@@ -86,44 +86,30 @@ export default async function OnboardingMeetPage({
         </div>
       </section>
 
-      {/* Rest of the team — small badges. Only when there's more than one. */}
-      {rest.length > 0 ? (
-        <section className="mt-8">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="font-mono text-[10px] tracking-widest text-warm-500 uppercase">
-              Then your team will include
-            </span>
-            <ArrowRight className="h-3 w-3 text-warm-400" aria-hidden="true" />
-          </div>
-          <ul className="flex flex-wrap gap-3">
-            {rest.map((id) => (
-              <li key={id}>
-                <TeamMemberBadge agentId={id} />
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-warm-500">
-            You&rsquo;ll hire each of them from the Hiring Room once {agent.name}&rsquo;s first
-            delivery is ready. They all read the same project brain — no re-explaining.
-          </p>
-        </section>
-      ) : null}
-
-      {/* Jamie — auto-included team coordinator. Always visible, regardless of picks. */}
-      <section className="mt-8 flex items-start gap-3 rounded-lg border border-warm-200 bg-indigo-50/40 p-4">
-        <AgentIconWrap agentId="jamie" size="md" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="font-display text-sm italic text-warm-900">Jamie</h3>
-            <Badge intent="info" size="sm">
-              Always included
-            </Badge>
-          </div>
-          <p className="mt-1 text-xs text-warm-600">
-            Your Scrum Master joins every team automatically. Jamie runs your daily standup
-            and unblocks work — no need to hire.
-          </p>
+      {/* Team chips — rest of the picked team plus Jamie (auto-included). */}
+      <section className="mt-8">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="font-mono text-[10px] tracking-widest text-warm-500 uppercase">
+            Then your team will include
+          </span>
+          <ArrowRight className="h-3 w-3 text-warm-400" aria-hidden="true" />
         </div>
+        <ul className="flex flex-wrap gap-3">
+          {rest.map((id) => (
+            <li key={id}>
+              <TeamMemberBadge agentId={id} />
+            </li>
+          ))}
+          {/* Jamie always-included at the end, with a small Always pill */}
+          <li>
+            <TeamMemberBadge agentId="jamie" alwaysIncluded />
+          </li>
+        </ul>
+        <p className="mt-3 text-xs text-warm-500">
+          {rest.length > 0
+            ? `You'll hire each of them from the Hiring Room once ${agent.name}'s first delivery is ready. Jamie joins every team — he runs your daily standup and unblocks work.`
+            : `Jamie joins every team automatically — he runs your daily standup and unblocks work. You can hire more specialists from the Hiring Room any time.`}
+        </p>
       </section>
 
       <form action={hireFirstAgentAction} className="mt-8 flex items-center justify-between gap-3">
@@ -149,13 +135,33 @@ export default async function OnboardingMeetPage({
   );
 }
 
-function TeamMemberBadge({ agentId }: { agentId: AgentId }): React.ReactElement {
+function TeamMemberBadge({
+  agentId,
+  alwaysIncluded = false,
+}: {
+  agentId: AgentId;
+  alwaysIncluded?: boolean;
+}): React.ReactElement {
   const a = getAgent(agentId);
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-warm-200 bg-surface-card px-3 py-1.5 shadow-desk">
+    <span
+      title={alwaysIncluded ? 'Joins every team automatically' : undefined}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-desk ${
+        alwaysIncluded
+          ? 'border-indigo-200 bg-indigo-50/40'
+          : 'border-warm-200 bg-surface-card'
+      }`}
+    >
       <AgentIconWrap agentId={agentId} size="sm" />
       <span className="flex flex-col leading-tight">
-        <span className="font-display text-sm italic text-warm-900">{a.name}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="font-display text-sm italic text-warm-900">{a.name}</span>
+          {alwaysIncluded ? (
+            <Badge intent="info" size="sm" className="h-4 px-1.5 text-[9px]">
+              Always
+            </Badge>
+          ) : null}
+        </span>
         <span className="text-[10px] text-warm-500">{a.role}</span>
       </span>
     </span>
