@@ -109,6 +109,23 @@ export default async function OnboardingMeetPage({
         </section>
       ) : null}
 
+      {/* Jamie — auto-included team coordinator. Always visible, regardless of picks. */}
+      <section className="mt-8 flex items-start gap-3 rounded-lg border border-warm-200 bg-indigo-50/40 p-4">
+        <AgentIconWrap agentId="jamie" size="md" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-display text-sm italic text-warm-900">Jamie</h3>
+            <Badge intent="info" size="sm">
+              Always included
+            </Badge>
+          </div>
+          <p className="mt-1 text-xs text-warm-600">
+            Your Scrum Master joins every team automatically. Jamie runs your daily standup
+            and unblocks work — no need to hire.
+          </p>
+        </div>
+      </section>
+
       <form action={hireFirstAgentAction} className="mt-8 flex items-center justify-between gap-3">
         <Link
           href={`/app/onboarding/needs?${buildBackQuery(params.type, params.name, params.desc, needs)}`}

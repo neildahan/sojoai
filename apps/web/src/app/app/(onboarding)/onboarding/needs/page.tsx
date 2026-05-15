@@ -21,8 +21,8 @@ interface PageProps {
 const NEEDS = [
   {
     value: 'plan',
-    title: 'A plan',
-    description: 'PRD, user stories, milestones.',
+    title: 'A PM to lead',
+    description: 'Sarah scopes the project and keeps everyone aligned. PRD, user stories, milestones.',
     icon: <ClipboardList />,
     iconBg: 'bg-indigo-50',
   },
