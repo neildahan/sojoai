@@ -76,9 +76,14 @@ describe('mapNeedsToTeam', () => {
     expect(mapNeedsToTeam(['design', 'marketing'])).toEqual(['alex', 'mia']);
   });
 
-  it('dedupes the recommended agent across overlapping needs', () => {
-    // development + frontend both map to Lena — should appear once.
-    expect(mapNeedsToTeam(['development', 'frontend'])).toEqual(['lena']);
+  it('expands "development" to BOTH Lena and Marcus', () => {
+    expect(mapNeedsToTeam(['development'])).toEqual(['lena', 'marcus']);
+    expect(mapNeedsToTeam(['plan', 'development'])).toEqual(['sarah', 'lena', 'marcus']);
+  });
+
+  it('dedupes overlapping picks', () => {
+    // development already includes Lena — picking frontend on top adds nothing new.
+    expect(mapNeedsToTeam(['development', 'frontend'])).toEqual(['lena', 'marcus']);
     // plan + design + qa: Sarah, Alex, Nina in order
     expect(mapNeedsToTeam(['plan', 'design', 'qa'])).toEqual(['sarah', 'alex', 'nina']);
   });

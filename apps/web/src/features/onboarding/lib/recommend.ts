@@ -10,15 +10,25 @@ import type { AgentId } from '@/lib/agents/registry';
  * point for a non-technical founder, and the team will hire Marcus next
  * if backend work surfaces.
  */
-const NEED_TO_AGENT: Record<string, AgentId> = {
-  plan: 'sarah',
-  design: 'alex',
-  development: 'lena',
-  frontend: 'lena',
-  backend: 'marcus',
-  qa: 'nina',
-  security: 'ryan',
-  marketing: 'mia',
+/**
+ * Each need maps to one or more agents. `development` is the only multi-
+ * agent need: when a user picks it without using Customize, they're saying
+ * "build the whole thing" — that's BOTH Lena (frontend) and Marcus
+ * (backend). Picking just `frontend` or `backend` narrows to one.
+ *
+ * Order within the array matters: it sets the recommended-first-hire
+ * preference when the need is the priority winner (e.g. `development`
+ * recommends Lena first, with Marcus as the next teammate).
+ */
+const NEED_TO_AGENTS: Record<string, AgentId[]> = {
+  plan: ['sarah'],
+  design: ['alex'],
+  development: ['lena', 'marcus'],
+  frontend: ['lena'],
+  backend: ['marcus'],
+  qa: ['nina'],
+  security: ['ryan'],
+  marketing: ['mia'],
 };
 
 /**
@@ -70,8 +80,9 @@ export function mapNeedsToTeam(needs: readonly string[]): AgentId[] {
 
   for (const n of ORDER) {
     if (needs.includes(n)) {
-      const agent = NEED_TO_AGENT[n];
-      if (agent) push(agent);
+      for (const a of NEED_TO_AGENTS[n] ?? []) {
+        push(a);
+      }
     }
   }
 
