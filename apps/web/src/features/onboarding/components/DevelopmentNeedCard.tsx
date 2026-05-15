@@ -64,7 +64,17 @@ export function DevelopmentNeedCard({
         <input
           type="checkbox"
           checked={included}
-          onChange={(e) => setIncluded(e.target.checked)}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setIncluded(next);
+            // Reset customise state whenever the card is turned off, so
+            // re-checking starts from a clean (collapsed) state.
+            if (!next) {
+              setShowCustomize(false);
+              setFrontend(false);
+              setBackend(false);
+            }
+          }}
           className="sr-only"
           aria-label="Development"
         />
