@@ -2,80 +2,108 @@ import * as React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Plus, Play } from 'lucide-react';
+import mongoose from 'mongoose';
+import { auth } from '@clerk/nextjs/server';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { OfficeFloor } from '@/features/office-floor/components/OfficeFloor';
-import type { OfficeFloorDesk, OfficeFloorMeeting } from '@/features/office-floor/components/OfficeFloor';
+import type { OfficeFloorDesk } from '@/features/office-floor/components/OfficeFloor';
+import { WelcomeBanner } from '@/features/onboarding/components/WelcomeBanner';
+import { connectDb } from '@/lib/db/connect';
+import { Project, Team, User } from '@/lib/db/models';
+import { isAgentId, type AgentId } from '@/lib/agents/registry';
+import type { AgentStatus } from '@/features/agents/components/StatusRing';
 
 export const metadata = { title: 'Team Room' };
 
 interface PageProps {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ welcome?: string }>;
 }
 
+const STATUS_VALUES: ReadonlySet<AgentStatus> = new Set([
+  'active',
+  'busy',
+  'blocked',
+  'talking',
+  'idle',
+]);
+
 /**
- * /app/[projectId]/team-room — the heart of the app. Renders the Office Floor.
+ * /app/[projectId]/team-room — the project workspace.
  *
- * Until Mongo is wired (Phase 3.2), only `projectId === 'demo'` resolves —
- * any other id 404s. The demo data exercises every Office Floor variant:
- * a meeting in progress, one active desk, one busy, one blocked, one idle,
- * plus two empty slots.
+ * Fetches the project from MongoDB and 404s if it's missing or not owned
+ * by the signed-in user. WelcomeBanner renders when `?welcome=<agentId>`
+ * is present in the URL (set by hireFirstAgentAction right after a hire).
  */
-export default async function TeamRoomPage({ params }: PageProps): Promise<React.ReactElement> {
+export default async function TeamRoomPage({
+  params,
+  searchParams,
+}: PageProps): Promise<React.ReactElement> {
   const { projectId } = await params;
+  const { welcome } = await searchParams;
 
-  if (projectId !== 'demo') {
-    // TODO(phase-3.2): fetch Project from Mongo, 404 if missing/unauthorized.
-    notFound();
-  }
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) notFound();
 
-  const projectName = 'Mango Health';
-  const meeting: OfficeFloorMeeting = {
-    participants: ['sarah', 'alex'],
-    topic: 'Reviewing the v1 PRD',
-  };
-  const desks: OfficeFloorDesk[] = [
-    {
-      agentId: 'lena',
-      status: 'active',
-      currentTask: 'Scaffolding the dashboard route',
-      progress: 65,
-    },
-    {
-      agentId: 'marcus',
-      status: 'busy',
-      currentTask: 'Waiting on API contract from Sarah',
-      progress: 30,
-    },
-    {
-      agentId: 'ryan',
-      status: 'blocked',
-      currentTask: 'OAuth scopes — needs your input',
-    },
-    {
-      agentId: 'nina',
-      status: 'idle',
-    },
-  ];
+  if (!mongoose.Types.ObjectId.isValid(projectId)) notFound();
+
+  await connectDb();
+
+  const user = await User.findOne({ clerkUserId }).lean<{ _id: mongoose.Types.ObjectId }>();
+  if (!user) notFound();
+
+  const project = await Project.findOne({
+    _id: new mongoose.Types.ObjectId(projectId),
+    userId: user._id,
+    status: 'active',
+  }).lean<{
+    _id: mongoose.Types.ObjectId;
+    name: string;
+    description: string;
+  }>();
+  if (!project) notFound();
+
+  const teamMembers = await Team.find({ projectId: project._id }).lean<
+    Array<{
+      agentId: string;
+      status: AgentStatus;
+      currentTask: string;
+      progress: number;
+    }>
+  >();
+
+  const desks: OfficeFloorDesk[] = teamMembers
+    .filter((t) => isAgentId(t.agentId) && t.agentId !== 'jamie') // Jamie is implicit
+    .map((t) => ({
+      agentId: t.agentId as AgentId,
+      status: STATUS_VALUES.has(t.status) ? t.status : 'idle',
+      currentTask: t.currentTask || undefined,
+      progress: typeof t.progress === 'number' && t.progress > 0 ? t.progress : undefined,
+    }));
+
+  const welcomeAgent = welcome && isAgentId(welcome) ? (welcome as AgentId) : null;
+  const activeCount = desks.filter((d) => d.status === 'active').length;
+  const busyCount = desks.filter((d) => d.status === 'busy').length;
+  const blockedCount = desks.filter((d) => d.status === 'blocked').length;
 
   return (
     <PageWrapper
-      eyebrow="Demo · /app/demo/team-room"
-      title={projectName}
+      eyebrow="Team room"
+      title={project.name}
       description="Your team is working. The Meeting Room glows when two or more agents are talking — click any desk to message that agent directly."
       actions={
         <>
           <Link
-            href={`/app/${projectId}/messages/meeting`}
+            href={`/app/${String(project._id)}/messages/meeting`}
             className={buttonVariants({ intent: 'secondary', size: 'sm' })}
-            aria-label="Start a meeting"
           >
             <Play className="h-3.5 w-3.5" aria-hidden="true" />
             Start meeting
           </Link>
           <Link
-            href={`/app/${projectId}/hire`}
+            href={`/app/${String(project._id)}/hire`}
             className={buttonVariants({ intent: 'primary', size: 'sm' })}
           >
             <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -85,14 +113,25 @@ export default async function TeamRoomPage({ params }: PageProps): Promise<React
       }
       size="wide"
     >
+      {welcomeAgent ? (
+        <WelcomeBanner
+          agentId={welcomeAgent}
+          projectId={String(project._id)}
+          className="mb-6"
+        />
+      ) : null}
+
       <div className="mb-6 flex items-center gap-2">
-        <Badge intent="success">{desks.filter((d) => d.status === 'active').length} active</Badge>
-        <Badge intent="warning">{desks.filter((d) => d.status === 'busy').length} waiting</Badge>
-        <Badge intent="danger">{desks.filter((d) => d.status === 'blocked').length} blocked</Badge>
-        <Badge intent="info">{meeting ? '1 meeting in progress' : 'No meetings'}</Badge>
+        <Badge intent="success">{activeCount} active</Badge>
+        <Badge intent="warning">{busyCount} waiting</Badge>
+        <Badge intent="danger">{blockedCount} blocked</Badge>
       </div>
 
-      <OfficeFloor projectId={projectId} desks={desks} meeting={meeting} emptySlots={2} />
+      <OfficeFloor
+        projectId={String(project._id)}
+        desks={desks}
+        emptySlots={Math.max(0, 3 - desks.length)}
+      />
     </PageWrapper>
   );
 }

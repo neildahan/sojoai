@@ -1,10 +1,11 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { WizardStepIndicator } from '@/features/onboarding/components/WizardStepIndicator';
+import { HireSubmitButton } from '@/features/onboarding/components/HireSubmitButton';
 import { AgentIconWrap } from '@/features/agents/components/AgentIconWrap';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { getAgent, type AgentId } from '@/lib/agents/registry';
 import { mapNeedsToTeam } from '@/features/onboarding/lib/recommend';
 import { hireFirstAgentAction } from '../actions';
@@ -126,10 +127,7 @@ export default async function OnboardingMeetPage({
         {needs.map((n) => (
           <input key={n} type="hidden" name="need" value={n} />
         ))}
-        <Button type="submit" intent="primary" size="lg">
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-          Hire {agent.name} &mdash; let&rsquo;s start
-        </Button>
+        <HireSubmitButton agentName={agent.name} />
       </form>
     </div>
   );

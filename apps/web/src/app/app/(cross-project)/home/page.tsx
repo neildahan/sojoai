@@ -1,28 +1,30 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
-import { currentUser } from '@clerk/nextjs/server';
+import mongoose from 'mongoose';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { PageWrapper } from '@/components/layout/PageWrapper';
 import { buttonVariants } from '@/components/ui/button';
 import { ProjectCard } from '@/features/projects/components/ProjectCard';
+import { connectDb } from '@/lib/db/connect';
+import { Project, Team, Task, User } from '@/lib/db/models';
+import { isAgentId, type AgentId } from '@/lib/agents/registry';
 
 export const metadata = { title: 'Home' };
 
 /**
  * /app/home — cross-project list.
  *
- * Currently renders the empty state — Mongo wiring lands in Phase 3 batch 2,
- * once we add the Clerk → User sync webhook and the project create flow.
- *
- * Server Component: reads the Clerk user directly via `currentUser()`.
+ * Reads the signed-in user's projects from MongoDB (and per-project task
+ * counts for the badge). Empty state when the user has none — that's the
+ * onboarding entry point.
  */
 export default async function AppHomePage(): Promise<React.ReactElement> {
-  const user = await currentUser();
-  const firstName = user?.firstName ?? user?.username ?? 'there';
+  const clerk = await currentUser();
+  const firstName = clerk?.firstName ?? clerk?.username ?? 'there';
   const greeting = greetingForHour(new Date().getHours());
 
-  // TODO(phase-3.2): replace with a real project query once Mongo is wired.
-  const projects: Array<React.ComponentProps<typeof ProjectCard>> = [];
+  const projects = await loadProjects();
 
   return (
     <PageWrapper
@@ -39,11 +41,79 @@ export default async function AppHomePage(): Promise<React.ReactElement> {
   );
 }
 
-function ProjectGrid({
-  projects,
-}: {
-  projects: Array<React.ComponentProps<typeof ProjectCard>>;
-}): React.ReactElement {
+type ProjectCardData = React.ComponentProps<typeof ProjectCard>;
+
+async function loadProjects(): Promise<ProjectCardData[]> {
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) return [];
+
+  await connectDb();
+
+  const user = await User.findOne({ clerkUserId }).lean<{
+    _id: mongoose.Types.ObjectId;
+  }>();
+  if (!user) return [];
+
+  const projects = await Project.find({ userId: user._id, status: 'active' })
+    .sort({ updatedAt: -1 })
+    .lean<
+      Array<{
+        _id: mongoose.Types.ObjectId;
+        name: string;
+        description: string;
+        updatedAt: Date;
+      }>
+    >();
+  if (projects.length === 0) return [];
+
+  const projectIds = projects.map((p) => p._id);
+
+  const [teams, taskCounts] = await Promise.all([
+    Team.find({ projectId: { $in: projectIds } }).lean<
+      Array<{ projectId: mongoose.Types.ObjectId; agentId: string }>
+    >(),
+    Task.aggregate<{ _id: mongoose.Types.ObjectId; open: number; blocked: number }>([
+      { $match: { projectId: { $in: projectIds } } },
+      {
+        $group: {
+          _id: '$projectId',
+          open: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 0, 1] } },
+          blocked: { $sum: { $cond: [{ $eq: ['$status', 'blocked'] }, 1, 0] } },
+        },
+      },
+    ]),
+  ]);
+
+  const teamsByProject = new Map<string, AgentId[]>();
+  for (const t of teams) {
+    if (!isAgentId(t.agentId)) continue;
+    const key = String(t.projectId);
+    const list = teamsByProject.get(key) ?? [];
+    list.push(t.agentId as AgentId);
+    teamsByProject.set(key, list);
+  }
+
+  const countsByProject = new Map<string, { open: number; blocked: number }>();
+  for (const c of taskCounts) {
+    countsByProject.set(String(c._id), { open: c.open, blocked: c.blocked });
+  }
+
+  return projects.map((p) => {
+    const id = String(p._id);
+    const counts = countsByProject.get(id) ?? { open: 0, blocked: 0 };
+    return {
+      id,
+      name: p.name,
+      description: p.description,
+      hiredAgents: teamsByProject.get(id) ?? [],
+      openTaskCount: counts.open,
+      blockerCount: counts.blocked,
+      lastActivityAt: (p.updatedAt ?? new Date()).toISOString(),
+    } satisfies ProjectCardData;
+  });
+}
+
+function ProjectGrid({ projects }: { projects: ProjectCardData[] }): React.ReactElement {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {projects.map((p) => (
@@ -66,20 +136,12 @@ function EmptyState(): React.ReactElement {
         Start your first project, describe what you&rsquo;re building, and we&rsquo;ll match you
         with the right agent to kick things off.
       </p>
-      <div className="flex items-center gap-3">
-        <Link
-          href="/app/onboarding/start"
-          className={buttonVariants({ intent: 'primary', size: 'md' })}
-        >
-          Start your first project
-        </Link>
-        <Link
-          href="/app/demo/team-room"
-          className={buttonVariants({ intent: 'ghost', size: 'md' })}
-        >
-          Or peek at the demo workspace →
-        </Link>
-      </div>
+      <Link
+        href="/app/onboarding/start"
+        className={buttonVariants({ intent: 'primary', size: 'md' })}
+      >
+        Start your first project
+      </Link>
     </section>
   );
 }

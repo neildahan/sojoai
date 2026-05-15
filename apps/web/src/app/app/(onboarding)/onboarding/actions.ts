@@ -1,14 +1,22 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { isAgentId } from '@/lib/agents/registry';
+import { connectDb } from '@/lib/db/connect';
+import { Project, ProjectBrain, Team, User } from '@/lib/db/models';
+import { mapNeedsToTeam } from '@/features/onboarding/lib/recommend';
 
 /**
  * Server actions for the onboarding wizard.
  *
- * State persists in URL search params — each step reads the prior step's
- * params from the URL and forwards them. This keeps the wizard refresh-safe
- * and link-share-able. When Mongo lands (Phase 3.2), the final `hireFirstAgent`
- * action will write a Project + Team doc instead of redirecting to /demo.
+ * Steps 1-3 keep state in URL search params (refresh-safe, shareable).
+ * Step 4 (`hireFirstAgentAction`) commits everything to MongoDB:
+ *   - Upsert the User from the Clerk session
+ *   - Create a Project
+ *   - Create a Team entry per recommended agent
+ *   - Initialise a ProjectBrain with the user's description + selected needs
+ *   - Redirect to /app/<projectId>/team-room?welcome=<agentId>
  */
 
 const ALLOWED_NEEDS = new Set([
@@ -49,9 +57,95 @@ export async function submitNeedsAction(formData: FormData): Promise<void> {
 }
 
 export async function hireFirstAgentAction(formData: FormData): Promise<void> {
-  // TODO(phase-3.2): create Project + Team + ProjectBrain docs from formData,
-  // then redirect to `/app/<newProjectId>/team-room`. Stub: send to demo.
-  const _agentId = String(formData.get('agentId') ?? 'sarah');
-  void _agentId;
-  redirect('/app/demo/team-room');
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) {
+    redirect('/sign-in');
+  }
+
+  // Parse + validate form data
+  const agentId = String(formData.get('agentId') ?? 'sarah');
+  if (!isAgentId(agentId)) {
+    redirect('/app/home');
+  }
+
+  const name = String(formData.get('name') ?? '').trim().slice(0, 80);
+  const description = String(formData.get('desc') ?? '').trim().slice(0, 500);
+  const rawType = String(formData.get('type') ?? 'fresh');
+  const type: 'greenfield' | 'existing' = rawType === 'existing' ? 'existing' : 'greenfield';
+
+  const needs = formData
+    .getAll('need')
+    .map((v) => String(v))
+    .filter((n) => ALLOWED_NEEDS.has(n));
+
+  if (!name || !description) {
+    redirect('/app/onboarding/describe?error=missing');
+  }
+
+  // Connect once for the whole action
+  await connectDb();
+
+  // 1. Upsert the User from Clerk. Email/name/avatar are pulled from the
+  //    Clerk session; the Clerk webhook will keep these in sync once wired.
+  const clerk = await currentUser();
+  const email = clerk?.emailAddresses?.[0]?.emailAddress ?? `${clerkUserId}@example.invalid`;
+  const fullName =
+    [clerk?.firstName, clerk?.lastName].filter(Boolean).join(' ') ||
+    clerk?.username ||
+    '';
+
+  const user = await User.findOneAndUpdate(
+    { clerkUserId },
+    {
+      $set: {
+        email,
+        name: fullName,
+        avatarUrl: clerk?.imageUrl ?? '',
+      },
+      $setOnInsert: { clerkUserId, plan: 'free' },
+    },
+    { upsert: true, new: true },
+  );
+
+  // 2. Create the Project.
+  const project = await Project.create({
+    userId: user._id,
+    name,
+    description,
+    type,
+    status: 'active',
+  });
+
+  // 3. Create Team entries for every recommended teammate, plus Jamie
+  //    (the always-included Scrum Master). The recommended first hire
+  //    gets the "active" status; the rest are marked idle until the user
+  //    explicitly hires them from the Hiring Room.
+  const team = mapNeedsToTeam(needs);
+  const teamDocs = team.map((id, idx) => ({
+    projectId: project._id,
+    agentId: id,
+    status: idx === 0 ? 'active' : 'idle',
+    currentTask: idx === 0 ? `Reading ${name}'s description` : '',
+    progress: 0,
+  }));
+  // Always include Jamie as the team coordinator
+  if (!team.includes('jamie')) {
+    teamDocs.push({
+      projectId: project._id,
+      agentId: 'jamie',
+      status: 'active',
+      currentTask: 'Coordinating the team',
+      progress: 0,
+    });
+  }
+  await Team.insertMany(teamDocs);
+
+  // 4. Initialise ProjectBrain with the description.
+  await ProjectBrain.create({
+    projectId: project._id,
+    projectDescription: description,
+  });
+
+  // 5. Off to the workspace.
+  redirect(`/app/${String(project._id)}/team-room?welcome=${agentId}`);
 }
