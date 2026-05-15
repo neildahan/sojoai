@@ -101,10 +101,15 @@ export function MeetTeamForm({
           {kept.length === 0 ? (
             <p
               role="alert"
-              className="inline-flex max-w-xs items-center gap-1.5 text-right text-xs text-status-blocked"
+              className="flex max-w-sm items-start gap-1.5 text-xs leading-relaxed text-status-blocked"
             >
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              Pick at least one specialist. Jamie joins regardless as your coordinator.
+              <AlertCircle
+                className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
+              <span>
+                Pick at least one specialist. Jamie joins regardless as your coordinator.
+              </span>
             </p>
           ) : null}
         </div>
