@@ -44,21 +44,30 @@
 
 ## Routing layout
 
-Sojo AI uses the Next.js App Router. Three top-level segments:
+Sojo AI uses the Next.js App Router. Routes split by chrome:
 
 ```
 src/app/
-├── (marketing)/        ← public: /, /pricing
-├── (auth)/             ← /login, /sign-up (Clerk)
-└── app/                ← authenticated workspace
-    ├── home/           ← /app/home (cross-project list)
-    ├── onboarding/     ← /app/onboarding/{start,describe,needs,connect,meet}
-    └── [projectId]/    ← per-project routes
+├── page.tsx                   ← / (marketing landing)
+├── pricing/                   ← /pricing
+├── (auth)/                    ← /sign-in, /sign-up (Clerk components, themed)
+├── dev/components/            ← /dev/components (internal playground; 404 in prod)
+├── api/
+│   ├── projects/[projectId]/chat/[agentId]/   ← POST: SSE Claude stream
+│   └── webhooks/clerk/                        ← Clerk user lifecycle webhook
+└── app/                                       ← authenticated workspace
+    ├── (cross-project)/                       ← TopBar shell (cross-project routes)
+    │   ├── page.tsx                           ← /app  → redirect to /app/home
+    │   └── home/                              ← /app/home (project list)
+    ├── (onboarding)/                          ← minimal no-chrome shell
+    │   └── onboarding/{start,describe,connect,needs,meet}/
+    └── [projectId]/                           ← Sidebar shell (project routes)
+        ├── page.tsx                           ← redirect → /team-room
         ├── team-room/
         ├── messages/
-        │   ├── [agentId]/
-        │   ├── general/
-        │   └── meeting/
+        │   ├── page.tsx                       ← DM list + #general entry
+        │   ├── [agentId]/                     ← DM with one agent
+        │   └── general/                       ← #general team feed
         ├── tasks/
         ├── deliverables/
         ├── integrations/
@@ -66,7 +75,9 @@ src/app/
         └── hire/
 ```
 
-Route groups (`(marketing)`, `(auth)`) don't appear in the URL — they exist to give each shell its own layout.
+Route groups (`(auth)`, `(cross-project)`, `(onboarding)`) don't appear in the URL — they exist to give each chrome its own layout. `[projectId]` gets the dark Sidebar; cross-project gets a light TopBar; onboarding gets neither.
+
+Auth is enforced by `proxy.ts` (Next 16's renamed middleware) for any path under `/app(.*)`.
 
 ---
 

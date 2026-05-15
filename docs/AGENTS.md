@@ -91,6 +91,16 @@ In the UI, both Sarah's and Alex's outputs are streamed sequentially into the **
 
 All agent calls use the Anthropic SDK's `messages.stream()`. The route handler forwards chunks to the browser as Server-Sent Events. Never buffer a full completion before sending.
 
+The live endpoint is **`POST /api/projects/[projectId]/chat/[agentId]`**. Event format:
+
+```
+data: {"type":"delta","text":"…token chunk…"}
+data: {"type":"done","usage":{"inputTokens":…,"outputTokens":…}}
+data: {"type":"error","message":"…"}
+```
+
+The client helper in `features/chat/lib/streamReply.ts` handles parsing. `ChatPanel` calls it on every send and falls back to a friendly stub message when the stream errors (e.g. no `ANTHROPIC_API_KEY`).
+
 ---
 
 ## Token usage
